@@ -971,7 +971,376 @@ impl Instruction {
                     _ => Err(Error::HexFcInstructionSubopcode(subop)),
                 }
             }
-            0xFD => todo!("vector instructions"),
+            0xFD => {
+                let (subop, bytes) = bytes.advance_u32()?;
+                match subop {
+                    0 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load(ma), bytes))
+                    }
+                    1 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load8x8S(ma), bytes))
+                    }
+                    2 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load8x8U(ma), bytes))
+                    }
+                    3 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load16x4S(ma), bytes))
+                    }
+                    4 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load16x4U(ma), bytes))
+                    }
+                    5 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32x2S(ma), bytes))
+                    }
+                    6 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32x2U(ma), bytes))
+                    }
+                    7 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load8Splat(ma), bytes))
+                    }
+                    8 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load16Splat(ma), bytes))
+                    }
+                    9 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32Splat(ma), bytes))
+                    }
+                    10 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load64Splat(ma), bytes))
+                    }
+                    92 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32Zero(ma), bytes))
+                    }
+                    93 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load64Zero(ma), bytes))
+                    }
+                    11 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Store(ma), bytes))
+                    }
+                    84 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load8Lane(ma, li), bytes))
+                    }
+                    85 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load16Lane(ma, li), bytes))
+                    }
+                    86 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load32Lane(ma, li), bytes))
+                    }
+                    87 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load64Lane(ma, li), bytes))
+                    }
+                    88 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store8Lane(ma, li), bytes))
+                    }
+                    89 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store16Lane(ma, li), bytes))
+                    }
+                    90 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store32Lane(ma, li), bytes))
+                    }
+                    91 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store64Lane(ma, li), bytes))
+                    }
+                    12 => {
+                        let (v128, bytes) = bytes.advance::<16>()?;
+                        Ok((Self::V128Const(u128::from_le_bytes(*v128)), bytes))
+                    }
+                    13 => {
+                        let mut lis = [0u32; 16];
+                        let mut bytes = bytes;
+                        for i in 0..16 {
+                            let (li, bytes_) = bytes.advance_u32()?;
+                            lis[i] = li;
+                            bytes = bytes_;
+                        }
+                        Ok((Self::I8x16Shuffle(lis), bytes))
+                    }
+                    21 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I8x16ExtractLaneS(li), bytes))
+                    }
+                    22 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I8x16ExtractLaneU(li), bytes))
+                    }
+                    23 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I8x16ReplaceLane(li), bytes))
+                    }
+                    24 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I16x8ExtractLaneS(li), bytes))
+                    }
+                    25 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I16x8ExtractLaneU(li), bytes))
+                    }
+                    26 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I16x8ReplaceLane(li), bytes))
+                    }
+                    27 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I32x4ExtractLane(li), bytes))
+                    }
+                    28 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I32x4ReplaceLane(li), bytes))
+                    }
+                    29 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I64x2ExtractLane(li), bytes))
+                    }
+                    30 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I64x2ReplaceLane(li), bytes))
+                    }
+                    31 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F32x4ExtractLane(li), bytes))
+                    }
+                    32 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F32x4ReplaceLane(li), bytes))
+                    }
+                    33 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F64x2ExtractLane(li), bytes))
+                    }
+                    34 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F64x2ReplaceLane(li), bytes))
+                    }
+                    14 => Ok((Self::I8X16Swizzle, bytes)),
+                    15 => Ok((Self::I8x16Splat, bytes)),
+                    16 => Ok((Self::I16x8Splat, bytes)),
+                    17 => Ok((Self::I32x4Splat, bytes)),
+                    18 => Ok((Self::I64x2Splat, bytes)),
+                    19 => Ok((Self::F32x4Splat, bytes)),
+                    20 => Ok((Self::F64x2Splat, bytes)),
+                    35 => Ok((Self::I8x16Eq, bytes)),
+                    36 => Ok((Self::I8x16Ne, bytes)),
+                    37 => Ok((Self::I8X16LtS, bytes)),
+                    38 => Ok((Self::I8X16LtU, bytes)),
+                    39 => Ok((Self::I8X16GtS, bytes)),
+                    40 => Ok((Self::I8X16GtU, bytes)),
+                    41 => Ok((Self::I8X16LeS, bytes)),
+                    42 => Ok((Self::I8X16LeU, bytes)),
+                    43 => Ok((Self::I8X16GeS, bytes)),
+                    44 => Ok((Self::I8X16GeU, bytes)),
+                    45 => Ok((Self::I16x8Eq, bytes)),
+                    46 => Ok((Self::I16x8Ne, bytes)),
+                    47 => Ok((Self::I16x8LtS, bytes)),
+                    48 => Ok((Self::I16x8LtU, bytes)),
+                    49 => Ok((Self::I16x8GtS, bytes)),
+                    50 => Ok((Self::I16x8GtU, bytes)),
+                    51 => Ok((Self::I16x8LeS, bytes)),
+                    52 => Ok((Self::I16x8LeU, bytes)),
+                    53 => Ok((Self::I16x8GeS, bytes)),
+                    54 => Ok((Self::I16x8GeU, bytes)),
+                    55 => Ok((Self::I32x4Eq, bytes)),
+                    56 => Ok((Self::I32x4Ne, bytes)),
+                    57 => Ok((Self::I32x4LtS, bytes)),
+                    58 => Ok((Self::I32x4LtU, bytes)),
+                    59 => Ok((Self::I32x4GtS, bytes)),
+                    60 => Ok((Self::I32x4GtU, bytes)),
+                    61 => Ok((Self::I32x4LeS, bytes)),
+                    62 => Ok((Self::I32x4LeU, bytes)),
+                    63 => Ok((Self::I32x4GeS, bytes)),
+                    64 => Ok((Self::I32x4GeU, bytes)),
+                    214 => Ok((Self::I64x2Eq, bytes)),
+                    215 => Ok((Self::I64x2Ne, bytes)),
+                    216 => Ok((Self::I64x2LtS, bytes)),
+                    217 => Ok((Self::I64x2GtS, bytes)),
+                    218 => Ok((Self::I64x2LeS, bytes)),
+                    219 => Ok((Self::I64x2GeS, bytes)),
+                    65 => Ok((Self::F32x4Eq, bytes)),
+                    66 => Ok((Self::F32x4Ne, bytes)),
+                    67 => Ok((Self::F32x4Lt, bytes)),
+                    68 => Ok((Self::F32x4Gt, bytes)),
+                    69 => Ok((Self::F32x4Le, bytes)),
+                    70 => Ok((Self::F32x4Ge, bytes)),
+                    71 => Ok((Self::F64x2Eq, bytes)),
+                    72 => Ok((Self::F64x2Ne, bytes)),
+                    73 => Ok((Self::F64x2Lt, bytes)),
+                    74 => Ok((Self::F64x2Gt, bytes)),
+                    75 => Ok((Self::F64x2Le, bytes)),
+                    76 => Ok((Self::F64x2Ge, bytes)),
+                    77 => Ok((Self::V128Not, bytes)),
+                    78 => Ok((Self::V128And, bytes)),
+                    79 => Ok((Self::V128AndNot, bytes)),
+                    80 => Ok((Self::V128Or, bytes)),
+                    81 => Ok((Self::V128Xor, bytes)),
+                    82 => Ok((Self::V128Bitselect, bytes)),
+                    83 => Ok((Self::V128AnyTrue, bytes)),
+                    96 => Ok((Self::I8x16Abs, bytes)),
+                    97 => Ok((Self::I8x16Neg, bytes)),
+                    98 => Ok((Self::I8x16Popcnt, bytes)),
+                    99 => Ok((Self::I8x16AllTrue, bytes)),
+                    100 => Ok((Self::I8x16Bitmask, bytes)),
+                    101 => Ok((Self::I8x16NarrowI16x8S, bytes)),
+                    102 => Ok((Self::I8x16NarrowI16x8U, bytes)),
+                    107 => Ok((Self::I8x16Shl, bytes)),
+                    108 => Ok((Self::I8x16ShrS, bytes)),
+                    109 => Ok((Self::I8x16ShrU, bytes)),
+                    110 => Ok((Self::I8x16Add, bytes)),
+                    111 => Ok((Self::I8x16AddSatS, bytes)),
+                    112 => Ok((Self::I8x16AddSatU, bytes)),
+                    113 => Ok((Self::I8x16Sub, bytes)),
+                    114 => Ok((Self::I8x16SubSatS, bytes)),
+                    115 => Ok((Self::I8x16SubSatU, bytes)),
+                    118 => Ok((Self::I8x16MinS, bytes)),
+                    119 => Ok((Self::I8x16MinU, bytes)),
+                    120 => Ok((Self::I8x16MaxS, bytes)),
+                    121 => Ok((Self::I8x16MaxU, bytes)),
+                    123 => Ok((Self::I8x16AvgrU, bytes)),
+                    124 => Ok((Self::I16x8ExtAddPairwiseI8x16S, bytes)),
+                    125 => Ok((Self::I16x8ExtAddPairwiseI8x16U, bytes)),
+                    128 => Ok((Self::I16x8Abs, bytes)),
+                    129 => Ok((Self::I16x8Neg, bytes)),
+                    130 => Ok((Self::I16x8Q15MulrSatS, bytes)),
+                    131 => Ok((Self::I16x8AllTrue, bytes)),
+                    132 => Ok((Self::I16x8Bitmask, bytes)),
+                    133 => Ok((Self::I16x8NarrowI32x4S, bytes)),
+                    134 => Ok((Self::I16x8NarrowI32x4U, bytes)),
+                    135 => Ok((Self::I16x8ExtendLowI8X16S, bytes)),
+                    136 => Ok((Self::I16x8ExtendHighI8X16S, bytes)),
+                    137 => Ok((Self::I16x8ExtendLowI8X16U, bytes)),
+                    138 => Ok((Self::I16x8ExtendHighI8X16U, bytes)),
+                    139 => Ok((Self::I16x8Shl, bytes)),
+                    140 => Ok((Self::I16x8ShrS, bytes)),
+                    141 => Ok((Self::I16x8ShrU, bytes)),
+                    142 => Ok((Self::I16x8Add, bytes)),
+                    143 => Ok((Self::I16x8AddSatS, bytes)),
+                    144 => Ok((Self::I16x8AddSatU, bytes)),
+                    145 => Ok((Self::I16x8Sub, bytes)),
+                    146 => Ok((Self::I16x8SubSatS, bytes)),
+                    147 => Ok((Self::I16x8SubSatU, bytes)),
+                    149 => Ok((Self::I16X8Mul, bytes)),
+                    150 => Ok((Self::I16x8MinS, bytes)),
+                    151 => Ok((Self::I16x8MinU, bytes)),
+                    152 => Ok((Self::I16x8MaxS, bytes)),
+                    153 => Ok((Self::I16x8MaxU, bytes)),
+                    155 => Ok((Self::I16x8AvgrU, bytes)),
+                    156 => Ok((Self::I16x8ExtmulLowI8x16S, bytes)),
+                    157 => Ok((Self::I16x8ExtmulHighI8x16S, bytes)),
+                    158 => Ok((Self::I16x8ExtmulLowI8x16U, bytes)),
+                    159 => Ok((Self::I16x8ExtmulHighI8x16U, bytes)),
+                    126 => Ok((Self::I32x4ExtAddPairwiseI16x8S, bytes)),
+                    127 => Ok((Self::I32x4ExtAddPairwiseI16x8U, bytes)),
+                    160 => Ok((Self::I32x4Abs, bytes)),
+                    161 => Ok((Self::I32x4Neg, bytes)),
+                    163 => Ok((Self::I32x4AllTrue, bytes)),
+                    164 => Ok((Self::I32x4Bitmask, bytes)),
+                    167 => Ok((Self::I32x4ExtendLowI16X8S, bytes)),
+                    168 => Ok((Self::I32x4ExtendHighI16X8S, bytes)),
+                    169 => Ok((Self::I32x4ExtendLowI16X8U, bytes)),
+                    170 => Ok((Self::I32x4ExtendHighI16X8U, bytes)),
+                    171 => Ok((Self::I32x4Shl, bytes)),
+                    172 => Ok((Self::I32x4ShrS, bytes)),
+                    173 => Ok((Self::I32x4ShrU, bytes)),
+                    174 => Ok((Self::I32x4Add, bytes)),
+                    177 => Ok((Self::I32x4Sub, bytes)),
+                    181 => Ok((Self::I32x4Mul, bytes)),
+                    182 => Ok((Self::I32x4MinS, bytes)),
+                    183 => Ok((Self::I32x4MinU, bytes)),
+                    184 => Ok((Self::I32x4MaxS, bytes)),
+                    185 => Ok((Self::I32x4MaxU, bytes)),
+                    186 => Ok((Self::I32x4DotI16x8S, bytes)),
+                    188 => Ok((Self::I32x4ExtmulLowI16x8S, bytes)),
+                    189 => Ok((Self::I32x4ExtmulHighI16x8S, bytes)),
+                    190 => Ok((Self::I32x4ExtmulLowI16x8U, bytes)),
+                    191 => Ok((Self::I32x4ExtmulHighI16x8U, bytes)),
+                    192 => Ok((Self::I64x2Abs, bytes)),
+                    193 => Ok((Self::I64x2Neg, bytes)),
+                    195 => Ok((Self::I64x2AllTrue, bytes)),
+                    196 => Ok((Self::I64x2Bitmask, bytes)),
+                    199 => Ok((Self::I64x2ExtendLowI16X8S, bytes)),
+                    200 => Ok((Self::I64x2ExtendHighI16X8S, bytes)),
+                    201 => Ok((Self::I64x2ExtendLowI16X8U, bytes)),
+                    202 => Ok((Self::I64x2ExtendHighI16X8U, bytes)),
+                    203 => Ok((Self::I64x2Shl, bytes)),
+                    204 => Ok((Self::I64x2ShrS, bytes)),
+                    205 => Ok((Self::I64x2ShrU, bytes)),
+                    206 => Ok((Self::I64x2Add, bytes)),
+                    209 => Ok((Self::I64x2Sub, bytes)),
+                    213 => Ok((Self::I64x2Mul, bytes)),
+                    220 => Ok((Self::I64x2ExtmulLowI32x4S, bytes)),
+                    221 => Ok((Self::I64x2ExtmulHighI32x4S, bytes)),
+                    222 => Ok((Self::I64x2ExtmulLowI32x4U, bytes)),
+                    223 => Ok((Self::I64x2ExtmulHighI32x4U, bytes)),
+                    103 => Ok((Self::F32x4Ceil, bytes)),
+                    104 => Ok((Self::F32x4Floor, bytes)),
+                    105 => Ok((Self::F32x4Trunc, bytes)),
+                    106 => Ok((Self::F32x4Nearest, bytes)),
+                    224 => Ok((Self::F32x4Abs, bytes)),
+                    225 => Ok((Self::F32x4Neg, bytes)),
+                    227 => Ok((Self::F32x4Sqrt, bytes)),
+                    228 => Ok((Self::F32x4Add, bytes)),
+                    229 => Ok((Self::F32x4Sub, bytes)),
+                    230 => Ok((Self::F32x4Mul, bytes)),
+                    231 => Ok((Self::F32x4Div, bytes)),
+                    232 => Ok((Self::F32x4Min, bytes)),
+                    233 => Ok((Self::F32x4Max, bytes)),
+                    234 => Ok((Self::F32x4Pmin, bytes)),
+                    235 => Ok((Self::F32x4Pmax, bytes)),
+                    116 => Ok((Self::F64x2Ceil, bytes)),
+                    117 => Ok((Self::F64x2Floor, bytes)),
+                    122 => Ok((Self::F64x2Trunc, bytes)),
+                    148 => Ok((Self::F64x2Nearest, bytes)),
+                    236 => Ok((Self::F64x2Abs, bytes)),
+                    237 => Ok((Self::F64x2Neg, bytes)),
+                    239 => Ok((Self::F64x2Sqrt, bytes)),
+                    240 => Ok((Self::F64x2Add, bytes)),
+                    241 => Ok((Self::F64x2Sub, bytes)),
+                    242 => Ok((Self::F64x2Mul, bytes)),
+                    243 => Ok((Self::F64x2Div, bytes)),
+                    244 => Ok((Self::F64x2Min, bytes)),
+                    245 => Ok((Self::F64x2Max, bytes)),
+                    246 => Ok((Self::F64x2Pmin, bytes)),
+                    247 => Ok((Self::F64x2Pmax, bytes)),
+                    248 => Ok((Self::I32x4TruncSatF32x4S, bytes)),
+                    249 => Ok((Self::I32x4TruncSatF32x4U, bytes)),
+                    250 => Ok((Self::F32x4ConvertI32x4S, bytes)),
+                    251 => Ok((Self::F32x4ConvertI32x4U, bytes)),
+                    252 => Ok((Self::I32x4TruncSatF64x2SZero, bytes)),
+                    253 => Ok((Self::I32x4TruncSatF64x2UZero, bytes)),
+                    254 => Ok((Self::F64x2ConvertLowI32x4S, bytes)),
+                    255 => Ok((Self::F64x2ConvertLowI32x4U, bytes)),
+                    94 => Ok((Self::F32x4DemoteF64x2Zero, bytes)),
+                    95 => Ok((Self::F64x2PromoteLowF32x4, bytes)),
+                    _ => Err(Error::VectorInstructionSubopcode(subop)),
+                }
+            }
             _ => Err(Error::Opcode(opcode)),
         }
     }

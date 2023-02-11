@@ -38,6 +38,8 @@ pub enum Error {
     ImportDescriptionTag(u8),
     #[error("invalid 0xFC instruction subopcode {0}")]
     HexFcInstructionSubopcode(u32),
+    #[error("invalid vector instruction subopcode {0}")]
+    VectorInstructionSubopcode(u32),
     #[error("invalid memory instruction 0x{0:02x} 0x{1:02x}")]
     MemoryInstruction(u8, u8),
     #[error("{instr} instruction shoud have a trailing zero byte, got {byte}")]

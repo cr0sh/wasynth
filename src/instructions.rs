@@ -1007,6 +1007,6 @@ impl Expression {
     }
 
     pub fn instructions(&self) -> &[Instruction] {
-        todo!();
+        &self.0
     }
 }

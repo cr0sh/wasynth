@@ -3,7 +3,10 @@ pub mod parse;
 pub mod synth;
 pub mod wasm_types;
 
-use std::marker::PhantomData;
+use std::{
+    io::{self, Write},
+    marker::PhantomData,
+};
 
 use log::trace;
 use thiserror::Error;
@@ -231,11 +234,63 @@ impl<'bytes, T, F> VectorIterator<'bytes, T, F> {
     }
 }
 
+pub trait WriteExt: Write {
+    /// Writes an u32 value into this writer.
+    fn write_u32(&mut self, n: u32) -> Result<(), io::Error> {
+        leb128::write::unsigned(self, n.into())?;
+        Ok(())
+    }
+    /// Writes an u64 value into this writer.
+    fn write_u64(&mut self, n: u64) -> Result<(), io::Error> {
+        leb128::write::unsigned(self, n)?;
+        Ok(())
+    }
+    /// Writes an i32 value into this writer.
+    fn write_s32(&mut self, n: i32) -> Result<(), io::Error> {
+        leb128::write::signed(self, n.into())?;
+        Ok(())
+    }
+    /// Writes an i64 value into this writer.
+    fn write_s64(&mut self, n: i64) -> Result<(), io::Error> {
+        leb128::write::signed(self, n)?;
+        Ok(())
+    }
+    /// Writes an f32 value into this writer.
+    fn write_f32(&mut self, n: f32) -> Result<(), io::Error> {
+        self.write_all(&n.to_le_bytes())
+    }
+    /// Writes an f64 value into this writer.
+    fn write_f64(&mut self, n: f64) -> Result<(), io::Error> {
+        self.write_all(&n.to_le_bytes())
+    }
+    /// Write a length of `xs` with its elements into this writer.
+    fn write_vector<T, F: for<'a, 'b> FnMut(&'a mut Self, &'b T) -> Result<(), io::Error>>(
+        &mut self,
+        xs: &[T],
+        mut func: F,
+    ) -> Result<(), io::Error> {
+        self.write_u32(xs.len().try_into().expect("vector length overflow"))?;
+        for x in xs {
+            (func)(self, x)?;
+        }
+        Ok(())
+    }
+    /// Write an UTF-8 string into this writer.
+    fn write_name(&mut self, name: &str) -> Result<(), io::Error> {
+        self.write_u32(name.len().try_into().expect("name length overflow"))?;
+        self.write_all(name.as_bytes())
+    }
+}
+
+impl<T: Write> WriteExt for T {}
+
 #[cfg(test)]
 mod tests {
+    use std::io::Write;
+
     use quickcheck::quickcheck;
 
-    use crate::Bytes;
+    use crate::{Bytes, WriteExt};
 
     #[test]
     fn test_advance() {
@@ -264,36 +319,35 @@ mod tests {
     quickcheck! {
         fn test_advance_u32(x: u32) -> bool {
             let mut buf = Vec::new();
-            leb128::write::unsigned(&mut buf, x as u64).unwrap();
+            buf.write_u32(x).unwrap();
             let (y, rest) = buf.advance_u32().unwrap();
             x == y && rest.is_empty()
         }
 
         fn test_advance_u64(x: u64) -> bool {
             let mut buf = Vec::new();
-            leb128::write::unsigned(&mut buf, x).unwrap();
+            buf.write_u64(x).unwrap();
             let (y, rest) = buf.advance_u64().unwrap();
             x == y && rest.is_empty()
         }
 
         fn test_advance_i32(x: i32) -> bool {
             let mut buf = Vec::new();
-            leb128::write::signed(&mut buf, x as i64).unwrap();
+            buf.write_s32(x).unwrap();
             let (y, rest) = buf.advance_s32().unwrap();
             x == y && rest.is_empty()
         }
 
         fn test_advance_i64(x: i64) -> bool {
             let mut buf = Vec::new();
-            leb128::write::signed(&mut buf, x).unwrap();
+            buf.write_s64(x).unwrap();
             let (y, rest) = buf.advance_s64().unwrap();
             x == y && rest.is_empty()
         }
 
         fn test_advance_f32(x: f32) -> bool {
-            use std::io::Write;
             let mut buf = Vec::new();
-            buf.write_all(&x.to_le_bytes()).unwrap();
+            buf.write_f32(x).unwrap();
             let (y, rest) = buf.advance_f32().unwrap();
             (if x.is_nan() {
                 y.is_nan()
@@ -303,9 +357,8 @@ mod tests {
         }
 
         fn test_advance_f64(x: f64) -> bool {
-            use std::io::Write;
             let mut buf = Vec::new();
-            buf.write_all(&x.to_le_bytes()).unwrap();
+            buf.write_f64(x).unwrap();
             let (y, rest) = buf.advance_f64().unwrap();
             (if x.is_nan() {
                 y.is_nan()
@@ -317,6 +370,11 @@ mod tests {
 
     #[test]
     fn test_advance_vector() {
+        let x: &[u8] = &[3, 2, 1, 2];
+        let mut bytes = Vec::new();
+        bytes
+            .write_vector(x, |bytes, x| bytes.write_all(&[*x]))
+            .unwrap();
         let bytes = "\x03\x02\x01\x02".as_bytes();
         let mut sum = 0;
         let mut numbers = bytes
@@ -335,7 +393,8 @@ mod tests {
 
     #[test]
     fn test_advance_name() {
-        let bytes = "\x04wasm".as_bytes();
+        let mut bytes = Vec::new();
+        bytes.write_name("wasm").unwrap();
         let (name, bytes) = bytes.advance_name().unwrap();
         assert_eq!(name, "wasm");
         assert_eq!(bytes, &[]);

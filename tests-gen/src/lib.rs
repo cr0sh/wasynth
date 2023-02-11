@@ -64,11 +64,11 @@ fn generate_tests_inner() -> anyhow::Result<TokenStream> {
             match path.extension().and_then(OsStr::to_str) {
                 Some("wat") => Ok::<TokenStream, anyhow::Error>(
                     quote! {
-                        pub(super) const #const_name: &str = include_str!(#path_lit);
-
                         #[test]
                         fn #fn_name() {
-                            let module = parse_wat(#const_name);
+                            let contents = std::fs::read(#path_lit).expect("cannot read wat file");
+                            let contents = String::from_utf8(contents).expect("cannot read wat file as an UTF-8 string");
+                            let module = parse_wat(&contents);
                             test_sections(&module);
                         }
                     }
@@ -76,11 +76,10 @@ fn generate_tests_inner() -> anyhow::Result<TokenStream> {
                 ),
                 Some("wasm") => Ok::<TokenStream, anyhow::Error>(
                     quote! {
-                        pub(super) const #const_name: &[u8] = include_bytes!(#path_lit);
-
                         #[test]
                         fn #fn_name() {
-                            let module = parse_wasm(#const_name);
+                            let contents = std::fs::read(#path_lit).expect("cannot read wat file");
+                            let module = parse_wasm(&contents);
                             test_sections(&module);
                         }
                     }

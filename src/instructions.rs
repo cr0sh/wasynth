@@ -1077,9 +1077,9 @@ impl Instruction {
                     13 => {
                         let mut lis = [0u32; 16];
                         let mut bytes = bytes;
-                        for i in 0..16 {
-                            let (li, bytes_) = bytes.advance_u32()?;
-                            lis[i] = li;
+                        for li in &mut lis {
+                            let (li_, bytes_) = bytes.advance_u32()?;
+                            *li = li_;
                             bytes = bytes_;
                         }
                         Ok((Self::I8x16Shuffle(lis), bytes))

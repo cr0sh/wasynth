@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             }
             wasynth::parse::Section::Data(datasec) => {
                 println!("data:");
-                for data in datasec.data()? {
+                for data in datasec.all_data()? {
                     println!("{:?}", data?);
                 }
             }

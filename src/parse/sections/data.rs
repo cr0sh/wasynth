@@ -12,7 +12,9 @@ impl<'bytes> DataSection<'bytes> {
         Ok(Self { bytes })
     }
 
-    pub fn data(&self) -> Result<impl Iterator<Item = Result<Data<'bytes>, Error>> + '_, Error> {
+    pub fn all_data(
+        &self,
+    ) -> Result<impl Iterator<Item = Result<Data<'bytes>, Error>> + '_, Error> {
         self.bytes.advance_vector(Data::from_bytes)
     }
 }

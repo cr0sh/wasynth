@@ -264,14 +264,14 @@ pub trait WriteExt: Write {
         self.write_all(&n.to_le_bytes())
     }
     /// Write a length of `xs` with its elements into this writer.
-    fn write_vector<T, F: for<'a, 'b> FnMut(&'a mut Self, &'b T) -> Result<(), io::Error>>(
+    fn write_vector<T, F: for<'a, 'b> FnMut(&'a T, &'b mut Self) -> Result<(), io::Error>>(
         &mut self,
         xs: &[T],
         mut func: F,
     ) -> Result<(), io::Error> {
         self.write_u32(xs.len().try_into().expect("vector length overflow"))?;
         for x in xs {
-            (func)(self, x)?;
+            (func)(x, self)?;
         }
         Ok(())
     }

@@ -2,7 +2,7 @@ use crate::wasm_types::FuncType;
 
 #[derive(Clone, Debug)]
 pub struct TypeSection {
-    pub(in crate::synth) types: Vec<FuncType>,
+    pub(crate) types: Vec<FuncType>,
 }
 
 impl TypeSection {

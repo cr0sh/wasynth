@@ -2,7 +2,7 @@ use crate::wasm_types::TableType;
 
 #[derive(Clone, Debug)]
 pub struct TableSection {
-    pub(in crate::synth) tables: Vec<TableType>,
+    pub(crate) tables: Vec<TableType>,
 }
 
 impl TableSection {

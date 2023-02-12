@@ -1,6 +1,6 @@
 #[derive(Clone, Debug)]
 pub struct DataCountSection {
-    pub(in crate::synth) data_count: u32,
+    pub(crate) data_count: u32,
 }
 
 impl DataCountSection {

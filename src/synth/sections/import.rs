@@ -2,7 +2,7 @@ use crate::wasm_types::{GlobalType, MemType, TableType};
 
 #[derive(Clone, Debug)]
 pub struct ImportSection {
-    pub(in crate::synth) imports: Vec<Import>,
+    pub(crate) imports: Vec<Import>,
 }
 
 impl ImportSection {
@@ -16,9 +16,9 @@ impl ImportSection {
 }
 
 pub struct Import {
-    pub(in crate::synth) module: String,
-    pub(in crate::synth) name: String,
-    pub(in crate::synth) description: ImportDescription,
+    pub(crate) module: String,
+    pub(crate) name: String,
+    pub(crate) description: ImportDescription,
 }
 
 impl Import {

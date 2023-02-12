@@ -1,6 +1,6 @@
 #[derive(Clone, Debug)]
 pub struct FunctionSection {
-    pub(in crate::synth) type_indices: Vec<u32>,
+    pub(crate) type_indices: Vec<u32>,
 }
 
 impl FunctionSection {

@@ -2,7 +2,7 @@ use crate::wasm_types::MemType;
 
 #[derive(Clone, Debug)]
 pub struct MemorySection {
-    pub(in crate::synth) memories: Vec<MemType>,
+    pub(crate) memories: Vec<MemType>,
 }
 
 impl MemorySection {

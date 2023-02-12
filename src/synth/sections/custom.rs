@@ -1,7 +1,7 @@
 #[derive(Clone, Debug)]
 pub struct CustomSection {
-    pub(in crate::synth) name: String,
-    pub(in crate::synth) bytes: Vec<u8>,
+    pub(crate) name: String,
+    pub(crate) bytes: Vec<u8>,
 }
 
 impl CustomSection {

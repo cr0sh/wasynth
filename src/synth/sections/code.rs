@@ -2,7 +2,7 @@ use crate::{instructions::Expression, wasm_types::ValueType};
 
 #[derive(Clone, Debug)]
 pub struct CodeSection {
-    pub(in crate::synth) codes: Vec<Code>,
+    pub(crate) codes: Vec<Code>,
 }
 
 impl CodeSection {

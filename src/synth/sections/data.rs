@@ -2,7 +2,7 @@ use crate::instructions::Expression;
 
 #[derive(Clone, Debug)]
 pub struct DataSection {
-    pub(in crate::synth) all_data: Vec<Data>,
+    pub(crate) all_data: Vec<Data>,
 }
 
 impl DataSection {

@@ -1,3 +1,7 @@
+use std::io::{self, Write};
+
+use crate::WriteExt;
+
 #[derive(Clone, Debug)]
 pub struct CustomSection {
     pub(crate) name: String,
@@ -19,5 +23,11 @@ impl CustomSection {
 
     pub fn bytes_mut(&mut self) -> &mut Vec<u8> {
         &mut self.bytes
+    }
+
+    pub(crate) fn write_into(&self, mut wr: impl Write) -> Result<(), io::Error> {
+        wr.write_name(&self.name)?;
+        wr.write_all(&self.bytes)?;
+        Ok(())
     }
 }

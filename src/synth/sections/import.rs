@@ -1,4 +1,9 @@
-use crate::wasm_types::{GlobalType, MemType, TableType};
+use std::io::{self, Write};
+
+use crate::{
+    wasm_types::{GlobalType, MemType, TableType},
+    WriteExt,
+};
 
 #[derive(Clone, Debug)]
 pub struct ImportSection {
@@ -12,6 +17,10 @@ impl ImportSection {
 
     pub fn imports_mut(&mut self) -> &mut Vec<Import> {
         &mut self.imports
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        wr.write_vector(&self.imports, Import::write_into)
     }
 }
 
@@ -46,6 +55,13 @@ impl Import {
     pub fn description_mut(&mut self) -> &mut ImportDescription {
         &mut self.description
     }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        wr.write_name(&self.module)?;
+        wr.write_name(&self.name)?;
+        self.description.write_into(wr)?;
+        Ok(())
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -54,4 +70,31 @@ pub enum ImportDescription {
     Table(TableType),
     Memory(MemType),
     Global(GlobalType),
+}
+
+impl ImportDescription {
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        match self {
+            ImportDescription::Type(x) => {
+                wr.write_all(&[0x00])?;
+                wr.write_u32(*x)?;
+                Ok(())
+            }
+            ImportDescription::Table(x) => {
+                wr.write_all(&[0x00])?;
+                x.write_into(wr)?;
+                Ok(())
+            }
+            ImportDescription::Memory(x) => {
+                wr.write_all(&[0x00])?;
+                x.write_into(wr)?;
+                Ok(())
+            }
+            ImportDescription::Global(x) => {
+                wr.write_all(&[0x00])?;
+                x.write_into(wr)?;
+                Ok(())
+            }
+        }
+    }
 }

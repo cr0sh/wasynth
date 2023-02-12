@@ -1,4 +1,6 @@
-use crate::wasm_types::MemType;
+use std::io::{self, Write};
+
+use crate::{wasm_types::MemType, WriteExt};
 
 #[derive(Clone, Debug)]
 pub struct MemorySection {
@@ -12,5 +14,9 @@ impl MemorySection {
 
     pub fn memories_mut(&mut self) -> &mut Vec<MemType> {
         &mut self.memories
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        wr.write_vector(&self.memories, MemType::write_into)
     }
 }

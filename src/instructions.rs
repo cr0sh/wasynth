@@ -1,6 +1,8 @@
+use std::io::{self, Write};
+
 use crate::{
     wasm_types::{ReferenceType, ValueType},
-    Bytes, Error,
+    Bytes, Error, WriteExt,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -17,7 +19,6 @@ impl BlockType {
         if bytes.is_empty() {
             return Err(Error::UnexpectedEof(1, 0));
         }
-
         if bytes[0] == 0x40 {
             return Ok((Self::Empty, &bytes[1..]));
         }
@@ -29,6 +30,19 @@ impl BlockType {
                 Ok((Self::TypeIndex(tyidx), bytes))
             }
             Err(err) => Err(err),
+        }
+    }
+
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
+        match *self {
+            BlockType::Empty => wr.write_all(&[0x40]),
+            BlockType::Value(vt) => vt.write_into(wr),
+            BlockType::TypeIndex(x) => {
+                if !(-(1i64 << 32)..=((1i64 << 32) - 1)).contains(&x) {
+                    panic!("s33 range overflow")
+                }
+                wr.write_s64(x)
+            }
         }
     }
 }
@@ -44,6 +58,12 @@ impl MemArg {
         let (align, bytes) = bytes.advance_u32()?;
         let (offset, bytes) = bytes.advance_u32()?;
         Ok((Self { align, offset }, bytes))
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        wr.write_u32(self.align)?;
+        wr.write_u32(self.offset)?;
+        Ok(())
     }
 }
 
@@ -1362,6 +1382,1694 @@ impl Instruction {
             bytes = left;
         }
     }
+
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
+        match self {
+            Instruction::Unreachable => {
+                wr.write_all(&[0x00])?;
+            }
+            Instruction::Nop => {
+                wr.write_all(&[0x01])?;
+            }
+            Instruction::Block(bt, instrs) => {
+                wr.write_all(&[0x02])?;
+                bt.write_into(wr)?;
+                Self::write_slice_into(&instrs, wr)?;
+                wr.write_all(&[0x0B])?;
+            }
+            Instruction::Loop(bt, instrs) => {
+                wr.write_all(&[0x03])?;
+                Self::write_slice_into(&instrs, wr)?;
+                wr.write_all(&[0x0B])?;
+            }
+            Instruction::If(bt, instrs, elseinstrs) => {
+                wr.write_all(&[0x04])?;
+                Self::write_slice_into(&instrs, wr)?;
+                if let Some(elseinstrs) = elseinstrs {
+                    wr.write_all(&[0x05])?;
+                    Self::write_slice_into(&elseinstrs, wr)?;
+                    wr.write_all(&[0x0B])?;
+                } else {
+                    wr.write_all(&[0x0B])?;
+                }
+            }
+            Instruction::Br(li) => {
+                wr.write_all(&[0x0C])?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::BrIf(li) => {
+                wr.write_all(&[0x0D])?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::BrTable(lis, ln) => {
+                wr.write_all(&[0x0E])?;
+                wr.write_vector(&lis, |x, wr| wr.write_u32(*x))?;
+            }
+            Instruction::Return => {
+                wr.write_all(&[0x0F])?;
+            }
+            Instruction::Call(fi) => {
+                wr.write_all(&[0x10])?;
+                wr.write_u32(*fi)?;
+            }
+            Instruction::CallIndirect { ty, table } => {
+                wr.write_all(&[0x11])?;
+                wr.write_u32(*ty)?;
+                wr.write_u32(*table)?;
+            }
+            Instruction::RefNull(_) => {
+                wr.write_all(&[0xD0])?;
+            }
+            Instruction::RefIsNull => {
+                wr.write_all(&[0xD1])?;
+            }
+            Instruction::RefFunc(fi) => {
+                wr.write_all(&[0xD2])?;
+                wr.write_u32(*fi)?;
+            }
+            Instruction::Drop => {
+                wr.write_all(&[0x1A])?;
+            }
+            Instruction::SelectNumeric => {
+                wr.write_all(&[0x1B])?;
+            }
+            Instruction::Select(vts) => {
+                wr.write_all(&[0x1C])?;
+                wr.write_vector(vts, ValueType::write_into)?;
+            }
+            Instruction::LocalGet(li) => {
+                wr.write_all(&[0x20])?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::LocalSet(li) => {
+                wr.write_all(&[0x21])?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::LocalTee(li) => {
+                wr.write_all(&[0x22])?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::GlobalGet(gi) => {
+                wr.write_all(&[0x23])?;
+                wr.write_u32(*gi)?;
+            }
+            Instruction::GlobalSet(gi) => {
+                wr.write_all(&[0x24])?;
+                wr.write_u32(*gi)?;
+            }
+            Instruction::TableGet(ti) => {
+                wr.write_all(&[0x25])?;
+                wr.write_u32(*ti)?;
+            }
+            Instruction::TableSet(ti) => {
+                wr.write_all(&[0x26])?;
+                wr.write_u32(*ti)?;
+            }
+            Instruction::TableInit(ei, ti) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(12)?;
+                wr.write_u32(*ei)?;
+                wr.write_u32(*ti)?;
+            }
+            Instruction::ElemDrop(ei) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(13)?;
+                wr.write_u32(*ei)?;
+            }
+            Instruction::TableCopy(ti1, ti2) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(14)?;
+                wr.write_u32(*ti1)?;
+                wr.write_u32(*ti2)?;
+            }
+            Instruction::TableGrow(ti) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(15)?;
+                wr.write_u32(*ti)?;
+            }
+            Instruction::TableSize(ti) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(16)?;
+                wr.write_u32(*ti)?;
+            }
+            Instruction::TableFill(ti) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(17)?;
+                wr.write_u32(*ti)?;
+            }
+            Instruction::I32Load(ma) => {
+                wr.write_all(&[0x28])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Load(ma) => {
+                wr.write_all(&[0x29])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::F32Load(ma) => {
+                wr.write_all(&[0x2A])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::F64Load(ma) => {
+                wr.write_all(&[0x2B])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I32Load8S(ma) => {
+                wr.write_all(&[0x2C])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I32Load8U(ma) => {
+                wr.write_all(&[0x2D])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I32Load16S(ma) => {
+                wr.write_all(&[0x2E])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I32Load16U(ma) => {
+                wr.write_all(&[0x2F])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Load8S(ma) => {
+                wr.write_all(&[0x30])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Load8U(ma) => {
+                wr.write_all(&[0x31])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Load16S(ma) => {
+                wr.write_all(&[0x32])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Load16U(ma) => {
+                wr.write_all(&[0x33])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Load32S(ma) => {
+                wr.write_all(&[0x34])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Load32U(ma) => {
+                wr.write_all(&[0x35])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I32Store(ma) => {
+                wr.write_all(&[0x36])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Store(ma) => {
+                wr.write_all(&[0x37])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::F32Store(ma) => {
+                wr.write_all(&[0x38])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::F64Store(ma) => {
+                wr.write_all(&[0x39])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I32Store8(ma) => {
+                wr.write_all(&[0x3A])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I32Store16(ma) => {
+                wr.write_all(&[0x3B])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Store8(ma) => {
+                wr.write_all(&[0x3C])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Store16(ma) => {
+                wr.write_all(&[0x3D])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::I64Store32(ma) => {
+                wr.write_all(&[0x3E])?;
+                ma.write_into(wr)?;
+            }
+            Instruction::MemorySize => {
+                wr.write_all(&[0x3F, 0x00])?;
+            }
+            Instruction::MemoryGrow => {
+                wr.write_all(&[0x40, 0x00])?;
+            }
+            Instruction::MemoryInit(di) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(8)?;
+                wr.write_u32(*di)?;
+                wr.write_all(&[0x00])?;
+            }
+            Instruction::DataDrop(di) => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(9)?;
+                wr.write_u32(*di)?;
+            }
+            Instruction::MemoryCopy => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(10)?;
+                wr.write_all(&[0x00, 0x00])?;
+            }
+            Instruction::MemoryFill => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(11)?;
+                wr.write_all(&[0x00])?;
+            }
+            Instruction::I32Const(n) => {
+                wr.write_all(&[0x41])?;
+                wr.write_u32(*n)?;
+            }
+            Instruction::I64Const(n) => {
+                wr.write_all(&[0x42])?;
+                wr.write_u64(*n)?;
+            }
+            Instruction::F32Const(z) => {
+                wr.write_all(&[0x43])?;
+                wr.write_f32(*z)?;
+            }
+            Instruction::F64Const(z) => {
+                wr.write_all(&[0x44])?;
+                wr.write_f64(*z)?;
+            }
+            Instruction::I32Eqz => {
+                wr.write_all(&[0x45])?;
+            }
+            Instruction::I32Eq => {
+                wr.write_all(&[0x46])?;
+            }
+            Instruction::I32Ne => {
+                wr.write_all(&[0x47])?;
+            }
+            Instruction::I32LtS => {
+                wr.write_all(&[0x48])?;
+            }
+            Instruction::I32LtU => {
+                wr.write_all(&[0x49])?;
+            }
+            Instruction::I32GtS => {
+                wr.write_all(&[0x4A])?;
+            }
+            Instruction::I32GtU => {
+                wr.write_all(&[0x4B])?;
+            }
+            Instruction::I32LeS => {
+                wr.write_all(&[0x4C])?;
+            }
+            Instruction::I32LeU => {
+                wr.write_all(&[0x4D])?;
+            }
+            Instruction::I32GeS => {
+                wr.write_all(&[0x4E])?;
+            }
+            Instruction::I32GeU => {
+                wr.write_all(&[0x4F])?;
+            }
+            Instruction::I64Eqz => {
+                wr.write_all(&[0x50])?;
+            }
+            Instruction::I64Eq => {
+                wr.write_all(&[0x51])?;
+            }
+            Instruction::I64Ne => {
+                wr.write_all(&[0x52])?;
+            }
+            Instruction::I64LtS => {
+                wr.write_all(&[0x53])?;
+            }
+            Instruction::I64LtU => {
+                wr.write_all(&[0x54])?;
+            }
+            Instruction::I64GtS => {
+                wr.write_all(&[0x55])?;
+            }
+            Instruction::I64GtU => {
+                wr.write_all(&[0x56])?;
+            }
+            Instruction::I64LeS => {
+                wr.write_all(&[0x57])?;
+            }
+            Instruction::I64LeU => {
+                wr.write_all(&[0x58])?;
+            }
+            Instruction::I64GeS => {
+                wr.write_all(&[0x59])?;
+            }
+            Instruction::I64GeU => {
+                wr.write_all(&[0x5A])?;
+            }
+            Instruction::F32Eq => {
+                wr.write_all(&[0x5B])?;
+            }
+            Instruction::F32Ne => {
+                wr.write_all(&[0x5C])?;
+            }
+            Instruction::F32Lt => {
+                wr.write_all(&[0x5D])?;
+            }
+            Instruction::F32Gt => {
+                wr.write_all(&[0x5E])?;
+            }
+            Instruction::F32Le => {
+                wr.write_all(&[0x5F])?;
+            }
+            Instruction::F32Ge => {
+                wr.write_all(&[0x60])?;
+            }
+            Instruction::F64Eq => {
+                wr.write_all(&[0x61])?;
+            }
+            Instruction::F64Ne => {
+                wr.write_all(&[0x62])?;
+            }
+            Instruction::F64Lt => {
+                wr.write_all(&[0x63])?;
+            }
+            Instruction::F64Gt => {
+                wr.write_all(&[0x64])?;
+            }
+            Instruction::F64Le => {
+                wr.write_all(&[0x65])?;
+            }
+            Instruction::F64Ge => {
+                wr.write_all(&[0x66])?;
+            }
+            Instruction::I32Clz => {
+                wr.write_all(&[0x67])?;
+            }
+            Instruction::I32Ctz => {
+                wr.write_all(&[0x68])?;
+            }
+            Instruction::I32Popcnt => {
+                wr.write_all(&[0x69])?;
+            }
+            Instruction::I32Add => {
+                wr.write_all(&[0x6A])?;
+            }
+            Instruction::I32Sub => {
+                wr.write_all(&[0x6B])?;
+            }
+            Instruction::I32Mul => {
+                wr.write_all(&[0x6C])?;
+            }
+            Instruction::I32DivS => {
+                wr.write_all(&[0x6D])?;
+            }
+            Instruction::I32DivU => {
+                wr.write_all(&[0x6E])?;
+            }
+            Instruction::I32RemS => {
+                wr.write_all(&[0x6F])?;
+            }
+            Instruction::I32RemU => {
+                wr.write_all(&[0x70])?;
+            }
+            Instruction::I32And => {
+                wr.write_all(&[0x71])?;
+            }
+            Instruction::I32Or => {
+                wr.write_all(&[0x72])?;
+            }
+            Instruction::I32Xor => {
+                wr.write_all(&[0x73])?;
+            }
+            Instruction::I32Shl => {
+                wr.write_all(&[0x74])?;
+            }
+            Instruction::I32ShrS => {
+                wr.write_all(&[0x75])?;
+            }
+            Instruction::I32ShrU => {
+                wr.write_all(&[0x76])?;
+            }
+            Instruction::I32Rotl => {
+                wr.write_all(&[0x77])?;
+            }
+            Instruction::I32Rotr => {
+                wr.write_all(&[0x78])?;
+            }
+            Instruction::I64Clz => {
+                wr.write_all(&[0x79])?;
+            }
+            Instruction::I64Ctz => {
+                wr.write_all(&[0x7A])?;
+            }
+            Instruction::I64Popcnt => {
+                wr.write_all(&[0x7B])?;
+            }
+            Instruction::I64Add => {
+                wr.write_all(&[0x7C])?;
+            }
+            Instruction::I64Sub => {
+                wr.write_all(&[0x7D])?;
+            }
+            Instruction::I64Mul => {
+                wr.write_all(&[0x7E])?;
+            }
+            Instruction::I64DivS => {
+                wr.write_all(&[0x7F])?;
+            }
+            Instruction::I64DivU => {
+                wr.write_all(&[0x80])?;
+            }
+            Instruction::I64RemS => {
+                wr.write_all(&[0x81])?;
+            }
+            Instruction::I64RemU => {
+                wr.write_all(&[0x82])?;
+            }
+            Instruction::I64And => {
+                wr.write_all(&[0x83])?;
+            }
+            Instruction::I64Or => {
+                wr.write_all(&[0x84])?;
+            }
+            Instruction::I64Xor => {
+                wr.write_all(&[0x85])?;
+            }
+            Instruction::I64Shl => {
+                wr.write_all(&[0x86])?;
+            }
+            Instruction::I64ShrS => {
+                wr.write_all(&[0x87])?;
+            }
+            Instruction::I64ShrU => {
+                wr.write_all(&[0x88])?;
+            }
+            Instruction::I64Rotl => {
+                wr.write_all(&[0x89])?;
+            }
+            Instruction::I64Rotr => {
+                wr.write_all(&[0x8A])?;
+            }
+            Instruction::F32Abs => {
+                wr.write_all(&[0x8B])?;
+            }
+            Instruction::F32Neg => {
+                wr.write_all(&[0x8C])?;
+            }
+            Instruction::F32Ceil => {
+                wr.write_all(&[0x8D])?;
+            }
+            Instruction::F32Floor => {
+                wr.write_all(&[0x8E])?;
+            }
+            Instruction::F32Trunc => {
+                wr.write_all(&[0x8F])?;
+            }
+            Instruction::F32Nearest => {
+                wr.write_all(&[0x90])?;
+            }
+            Instruction::F32Sqrt => {
+                wr.write_all(&[0x91])?;
+            }
+            Instruction::F32Add => {
+                wr.write_all(&[0x92])?;
+            }
+            Instruction::F32Sub => {
+                wr.write_all(&[0x93])?;
+            }
+            Instruction::F32Mul => {
+                wr.write_all(&[0x94])?;
+            }
+            Instruction::F32Div => {
+                wr.write_all(&[0x95])?;
+            }
+            Instruction::F32Min => {
+                wr.write_all(&[0x96])?;
+            }
+            Instruction::F32Max => {
+                wr.write_all(&[0x97])?;
+            }
+            Instruction::F32Copysign => {
+                wr.write_all(&[0x98])?;
+            }
+            Instruction::F64Abs => {
+                wr.write_all(&[0x99])?;
+            }
+            Instruction::F64Neg => {
+                wr.write_all(&[0x9A])?;
+            }
+            Instruction::F64Ceil => {
+                wr.write_all(&[0x9B])?;
+            }
+            Instruction::F64Floor => {
+                wr.write_all(&[0x9C])?;
+            }
+            Instruction::F64Trunc => {
+                wr.write_all(&[0x9D])?;
+            }
+            Instruction::F64Nearest => {
+                wr.write_all(&[0x9E])?;
+            }
+            Instruction::F64Sqrt => {
+                wr.write_all(&[0x9F])?;
+            }
+            Instruction::F64Add => {
+                wr.write_all(&[0xA0])?;
+            }
+            Instruction::F64Sub => {
+                wr.write_all(&[0xA1])?;
+            }
+            Instruction::F64Mul => {
+                wr.write_all(&[0xA2])?;
+            }
+            Instruction::F64Div => {
+                wr.write_all(&[0xA3])?;
+            }
+            Instruction::F64Min => {
+                wr.write_all(&[0xA4])?;
+            }
+            Instruction::F64Max => {
+                wr.write_all(&[0xA5])?;
+            }
+            Instruction::F64Copysign => {
+                wr.write_all(&[0xA6])?;
+            }
+            Instruction::I32WrapI64 => {
+                wr.write_all(&[0xA7])?;
+            }
+            Instruction::I32TruncF32S => {
+                wr.write_all(&[0xA8])?;
+            }
+            Instruction::I32TruncF32U => {
+                wr.write_all(&[0xA9])?;
+            }
+            Instruction::I32TruncF64S => {
+                wr.write_all(&[0xAA])?;
+            }
+            Instruction::I32TruncF64U => {
+                wr.write_all(&[0xAB])?;
+            }
+            Instruction::I64ExtendI32S => {
+                wr.write_all(&[0xAC])?;
+            }
+            Instruction::I64ExtendI32U => {
+                wr.write_all(&[0xAD])?;
+            }
+            Instruction::I64TruncF32S => {
+                wr.write_all(&[0xAE])?;
+            }
+            Instruction::I64TruncF32U => {
+                wr.write_all(&[0xAF])?;
+            }
+            Instruction::I64TruncF64S => {
+                wr.write_all(&[0xB0])?;
+            }
+            Instruction::I64TruncF64U => {
+                wr.write_all(&[0xB1])?;
+            }
+            Instruction::F32ConvertI32S => {
+                wr.write_all(&[0xB2])?;
+            }
+            Instruction::F32ConvertI32U => {
+                wr.write_all(&[0xB3])?;
+            }
+            Instruction::F32ConvertI64S => {
+                wr.write_all(&[0xB4])?;
+            }
+            Instruction::F32ConvertI64U => {
+                wr.write_all(&[0xB5])?;
+            }
+            Instruction::F32DemoteF64 => {
+                wr.write_all(&[0xB6])?;
+            }
+            Instruction::F64ConvertI32S => {
+                wr.write_all(&[0xB7])?;
+            }
+            Instruction::F64ConvertI32U => {
+                wr.write_all(&[0xB8])?;
+            }
+            Instruction::F64ConvertI64S => {
+                wr.write_all(&[0xB9])?;
+            }
+            Instruction::F64ConvertI64U => {
+                wr.write_all(&[0xBA])?;
+            }
+            Instruction::F64PromoteF32 => {
+                wr.write_all(&[0xBB])?;
+            }
+            Instruction::I32ReinterpretF32 => {
+                wr.write_all(&[0xBC])?;
+            }
+            Instruction::I64ReinterpretF64 => {
+                wr.write_all(&[0xBD])?;
+            }
+            Instruction::F32ReinterpretI32 => {
+                wr.write_all(&[0xBE])?;
+            }
+            Instruction::F64ReinterpretI64 => {
+                wr.write_all(&[0xBF])?;
+            }
+            Instruction::I32Extend8S => {
+                wr.write_all(&[0xC0])?;
+            }
+            Instruction::I32Extend16S => {
+                wr.write_all(&[0xC1])?;
+            }
+            Instruction::I64Extend8S => {
+                wr.write_all(&[0xC2])?;
+            }
+            Instruction::I64Extend16S => {
+                wr.write_all(&[0xC3])?;
+            }
+            Instruction::I64Extend32S => {
+                wr.write_all(&[0xC4])?;
+            }
+            Instruction::I32TruncSatF32S => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(0)?;
+            }
+            Instruction::I32TruncSatF32U => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(1)?;
+            }
+            Instruction::I32TruncSatF64S => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(2)?;
+            }
+            Instruction::I32TruncSatF64U => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(3)?;
+            }
+            Instruction::I64TruncSatF32S => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(4)?;
+            }
+            Instruction::I64TruncSatF32U => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(5)?;
+            }
+            Instruction::I64TruncSatF64S => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(6)?;
+            }
+            Instruction::I64TruncSatF64U => {
+                wr.write_all(&[0xFC])?;
+                wr.write_u32(7)?;
+            }
+            Instruction::V128Load(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(0)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8x8S(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(1)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8x8U(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(2)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load16x4S(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(3)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load16x4U(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(4)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32x2S(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(5)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32x2U(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(6)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(7)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load16Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(8)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(9)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load64Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(10)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32Zero(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(92)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load64Zero(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(93)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Store(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(11)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(84)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Load16Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(85)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Load32Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(86)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Load64Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(87)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store8Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(88)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store16Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(89)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store32Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(90)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store64Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(91)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Const(x) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(12)?;
+                wr.write_all(&x.to_le_bytes())?;
+            }
+            Instruction::I8x16Shuffle(lis) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(13)?;
+                for li in lis {
+                    wr.write_u32(*li)?;
+                }
+            }
+            Instruction::I8x16ExtractLaneS(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(21)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I8x16ExtractLaneU(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(22)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I8x16ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(23)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I16x8ExtractLaneS(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(24)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I16x8ExtractLaneU(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(25)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I16x8ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(26)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I32x4ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(27)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I32x4ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(28)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I64x2ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(29)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I64x2ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(30)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F32x4ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(31)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F32x4ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(32)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F64x2ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(33)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F64x2ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(34)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I8X16Swizzle => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(14)?;
+            }
+            Instruction::I8x16Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(15)?;
+            }
+            Instruction::I16x8Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(16)?;
+            }
+            Instruction::I32x4Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(17)?;
+            }
+            Instruction::I64x2Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(18)?;
+            }
+            Instruction::F32x4Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(19)?;
+            }
+            Instruction::F64x2Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(20)?;
+            }
+            Instruction::I8x16Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(35)?;
+            }
+            Instruction::I8x16Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(36)?;
+            }
+            Instruction::I8X16LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(37)?;
+            }
+            Instruction::I8X16LtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(38)?;
+            }
+            Instruction::I8X16GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(39)?;
+            }
+            Instruction::I8X16GtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(40)?;
+            }
+            Instruction::I8X16LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(41)?;
+            }
+            Instruction::I8X16LeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(42)?;
+            }
+            Instruction::I8X16GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(43)?;
+            }
+            Instruction::I8X16GeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(44)?;
+            }
+            Instruction::I16x8Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(45)?;
+            }
+            Instruction::I16x8Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(46)?;
+            }
+            Instruction::I16x8LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(47)?;
+            }
+            Instruction::I16x8LtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(48)?;
+            }
+            Instruction::I16x8GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(49)?;
+            }
+            Instruction::I16x8GtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(50)?;
+            }
+            Instruction::I16x8LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(51)?;
+            }
+            Instruction::I16x8LeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(52)?;
+            }
+            Instruction::I16x8GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(53)?;
+            }
+            Instruction::I16x8GeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(54)?;
+            }
+            Instruction::I32x4Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(55)?;
+            }
+            Instruction::I32x4Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(56)?;
+            }
+            Instruction::I32x4LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(57)?;
+            }
+            Instruction::I32x4LtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(58)?;
+            }
+            Instruction::I32x4GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(59)?;
+            }
+            Instruction::I32x4GtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(60)?;
+            }
+            Instruction::I32x4LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(61)?;
+            }
+            Instruction::I32x4LeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(62)?;
+            }
+            Instruction::I32x4GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(63)?;
+            }
+            Instruction::I32x4GeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(64)?;
+            }
+            Instruction::I64x2Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(214)?;
+            }
+            Instruction::I64x2Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(215)?;
+            }
+            Instruction::I64x2LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(216)?;
+            }
+            Instruction::I64x2GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(217)?;
+            }
+            Instruction::I64x2LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(218)?;
+            }
+            Instruction::I64x2GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(219)?;
+            }
+            Instruction::F32x4Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(65)?;
+            }
+            Instruction::F32x4Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(66)?;
+            }
+            Instruction::F32x4Lt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(67)?;
+            }
+            Instruction::F32x4Gt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(68)?;
+            }
+            Instruction::F32x4Le => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(69)?;
+            }
+            Instruction::F32x4Ge => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(70)?;
+            }
+            Instruction::F64x2Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(71)?;
+            }
+            Instruction::F64x2Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(72)?;
+            }
+            Instruction::F64x2Lt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(73)?;
+            }
+            Instruction::F64x2Gt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(74)?;
+            }
+            Instruction::F64x2Le => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(75)?;
+            }
+            Instruction::F64x2Ge => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(76)?;
+            }
+            Instruction::V128Not => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(77)?;
+            }
+            Instruction::V128And => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(78)?;
+            }
+            Instruction::V128AndNot => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(79)?;
+            }
+            Instruction::V128Or => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(80)?;
+            }
+            Instruction::V128Xor => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(81)?;
+            }
+            Instruction::V128Bitselect => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(82)?;
+            }
+            Instruction::V128AnyTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(83)?;
+            }
+            Instruction::I8x16Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(96)?;
+            }
+            Instruction::I8x16Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(97)?;
+            }
+            Instruction::I8x16Popcnt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(98)?;
+            }
+            Instruction::I8x16AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(99)?;
+            }
+            Instruction::I8x16Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(100)?;
+            }
+            Instruction::I8x16NarrowI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(101)?;
+            }
+            Instruction::I8x16NarrowI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(102)?;
+            }
+            Instruction::I8x16Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(107)?;
+            }
+            Instruction::I8x16ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(108)?;
+            }
+            Instruction::I8x16ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(109)?;
+            }
+            Instruction::I8x16Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(110)?;
+            }
+            Instruction::I8x16AddSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(111)?;
+            }
+            Instruction::I8x16AddSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(112)?;
+            }
+            Instruction::I8x16Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(113)?;
+            }
+            Instruction::I8x16SubSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(114)?;
+            }
+            Instruction::I8x16SubSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(115)?;
+            }
+            Instruction::I8x16MinS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(118)?;
+            }
+            Instruction::I8x16MinU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(119)?;
+            }
+            Instruction::I8x16MaxS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(120)?;
+            }
+            Instruction::I8x16MaxU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(121)?;
+            }
+            Instruction::I8x16AvgrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(123)?;
+            }
+            Instruction::I16x8ExtAddPairwiseI8x16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(124)?;
+            }
+            Instruction::I16x8ExtAddPairwiseI8x16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(125)?;
+            }
+            Instruction::I16x8Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(128)?;
+            }
+            Instruction::I16x8Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(129)?;
+            }
+            Instruction::I16x8Q15MulrSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(130)?;
+            }
+            Instruction::I16x8AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(131)?;
+            }
+            Instruction::I16x8Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(132)?;
+            }
+            Instruction::I16x8NarrowI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(133)?;
+            }
+            Instruction::I16x8NarrowI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(134)?;
+            }
+            Instruction::I16x8ExtendLowI8X16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(135)?;
+            }
+            Instruction::I16x8ExtendHighI8X16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(136)?;
+            }
+            Instruction::I16x8ExtendLowI8X16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(137)?;
+            }
+            Instruction::I16x8ExtendHighI8X16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(138)?;
+            }
+            Instruction::I16x8Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(139)?;
+            }
+            Instruction::I16x8ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(140)?;
+            }
+            Instruction::I16x8ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(141)?;
+            }
+            Instruction::I16x8Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(142)?;
+            }
+            Instruction::I16x8AddSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(143)?;
+            }
+            Instruction::I16x8AddSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(144)?;
+            }
+            Instruction::I16x8Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(145)?;
+            }
+            Instruction::I16x8SubSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(146)?;
+            }
+            Instruction::I16x8SubSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(147)?;
+            }
+            Instruction::I16X8Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(149)?;
+            }
+            Instruction::I16x8MinS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(150)?;
+            }
+            Instruction::I16x8MinU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(151)?;
+            }
+            Instruction::I16x8MaxS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(152)?;
+            }
+            Instruction::I16x8MaxU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(153)?;
+            }
+            Instruction::I16x8AvgrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(155)?;
+            }
+            Instruction::I16x8ExtmulLowI8x16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(156)?;
+            }
+            Instruction::I16x8ExtmulHighI8x16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(157)?;
+            }
+            Instruction::I16x8ExtmulLowI8x16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(158)?;
+            }
+            Instruction::I16x8ExtmulHighI8x16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(159)?;
+            }
+            Instruction::I32x4ExtAddPairwiseI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(126)?;
+            }
+            Instruction::I32x4ExtAddPairwiseI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(127)?;
+            }
+            Instruction::I32x4Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(160)?;
+            }
+            Instruction::I32x4Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(161)?;
+            }
+            Instruction::I32x4AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(163)?;
+            }
+            Instruction::I32x4Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(164)?;
+            }
+            Instruction::I32x4ExtendLowI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(167)?;
+            }
+            Instruction::I32x4ExtendHighI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(168)?;
+            }
+            Instruction::I32x4ExtendLowI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(169)?;
+            }
+            Instruction::I32x4ExtendHighI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(170)?;
+            }
+            Instruction::I32x4Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(171)?;
+            }
+            Instruction::I32x4ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(172)?;
+            }
+            Instruction::I32x4ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(173)?;
+            }
+            Instruction::I32x4Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(174)?;
+            }
+            Instruction::I32x4Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(177)?;
+            }
+            Instruction::I32x4Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(181)?;
+            }
+            Instruction::I32x4MinS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(182)?;
+            }
+            Instruction::I32x4MinU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(183)?;
+            }
+            Instruction::I32x4MaxS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(184)?;
+            }
+            Instruction::I32x4MaxU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(185)?;
+            }
+            Instruction::I32x4DotI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(186)?;
+            }
+            Instruction::I32x4ExtmulLowI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(188)?;
+            }
+            Instruction::I32x4ExtmulHighI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(189)?;
+            }
+            Instruction::I32x4ExtmulLowI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(190)?;
+            }
+            Instruction::I32x4ExtmulHighI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(191)?;
+            }
+            Instruction::I64x2Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(192)?;
+            }
+            Instruction::I64x2Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(193)?;
+            }
+            Instruction::I64x2AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(195)?;
+            }
+            Instruction::I64x2Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(196)?;
+            }
+            Instruction::I64x2ExtendLowI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(199)?;
+            }
+            Instruction::I64x2ExtendHighI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(200)?;
+            }
+            Instruction::I64x2ExtendLowI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(201)?;
+            }
+            Instruction::I64x2ExtendHighI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(202)?;
+            }
+            Instruction::I64x2Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(203)?;
+            }
+            Instruction::I64x2ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(204)?;
+            }
+            Instruction::I64x2ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(205)?;
+            }
+            Instruction::I64x2Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(206)?;
+            }
+            Instruction::I64x2Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(209)?;
+            }
+            Instruction::I64x2Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(213)?;
+            }
+            Instruction::I64x2ExtmulLowI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(220)?;
+            }
+            Instruction::I64x2ExtmulHighI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(221)?;
+            }
+            Instruction::I64x2ExtmulLowI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(222)?;
+            }
+            Instruction::I64x2ExtmulHighI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(223)?;
+            }
+            Instruction::F32x4Ceil => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(103)?;
+            }
+            Instruction::F32x4Floor => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(104)?;
+            }
+            Instruction::F32x4Trunc => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(105)?;
+            }
+            Instruction::F32x4Nearest => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(106)?;
+            }
+            Instruction::F32x4Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(224)?;
+            }
+            Instruction::F32x4Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(225)?;
+            }
+            Instruction::F32x4Sqrt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(227)?;
+            }
+            Instruction::F32x4Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(228)?;
+            }
+            Instruction::F32x4Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(229)?;
+            }
+            Instruction::F32x4Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(230)?;
+            }
+            Instruction::F32x4Div => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(231)?;
+            }
+            Instruction::F32x4Min => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(232)?;
+            }
+            Instruction::F32x4Max => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(233)?;
+            }
+            Instruction::F32x4Pmin => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(234)?;
+            }
+            Instruction::F32x4Pmax => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(235)?;
+            }
+            Instruction::F64x2Ceil => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(116)?;
+            }
+            Instruction::F64x2Floor => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(117)?;
+            }
+            Instruction::F64x2Trunc => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(122)?;
+            }
+            Instruction::F64x2Nearest => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(148)?;
+            }
+            Instruction::F64x2Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(236)?;
+            }
+            Instruction::F64x2Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(237)?;
+            }
+            Instruction::F64x2Sqrt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(239)?;
+            }
+            Instruction::F64x2Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(240)?;
+            }
+            Instruction::F64x2Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(241)?;
+            }
+            Instruction::F64x2Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(242)?;
+            }
+            Instruction::F64x2Div => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(243)?;
+            }
+            Instruction::F64x2Min => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(244)?;
+            }
+            Instruction::F64x2Max => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(245)?;
+            }
+            Instruction::F64x2Pmin => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(246)?;
+            }
+            Instruction::F64x2Pmax => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(247)?;
+            }
+            Instruction::I32x4TruncSatF32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(248)?;
+            }
+            Instruction::I32x4TruncSatF32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(249)?;
+            }
+            Instruction::F32x4ConvertI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(250)?;
+            }
+            Instruction::F32x4ConvertI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(251)?;
+            }
+            Instruction::I32x4TruncSatF64x2SZero => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(252)?;
+            }
+            Instruction::I32x4TruncSatF64x2UZero => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(253)?;
+            }
+            Instruction::F64x2ConvertLowI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(254)?;
+            }
+            Instruction::F64x2ConvertLowI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(255)?;
+            }
+            Instruction::F32x4DemoteF64x2Zero => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(94)?;
+            }
+            Instruction::F64x2PromoteLowF32x4 => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(95)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn write_slice_into(this: &[Self], wr: &mut impl Write) -> Result<(), io::Error> {
+        for x in this {
+            x.write_into(wr)?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -1373,6 +3081,10 @@ impl Expression {
         let (instrs, _, bytes) = Instruction::from_bytes_vec(bytes, &[0x0B])?;
 
         Ok((Self(instrs), bytes))
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        Instruction::write_slice_into(&self.0, wr)
     }
 
     pub fn instructions(&self) -> &[Instruction] {

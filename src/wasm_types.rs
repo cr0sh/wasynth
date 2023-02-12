@@ -2,9 +2,12 @@
 //!
 //! <https://webassembly.github.io/spec/core/binary/types.html>
 
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    io::{self, Write},
+};
 
-use crate::{Bytes, Error};
+use crate::{Bytes, Error, WriteExt};
 
 /// A WebAssembly reference type.
 ///
@@ -21,6 +24,13 @@ impl ReferenceType {
             0x70 => Ok(Self::FuncRef),
             0x6F => Ok(Self::ExternRef),
             x => Err(Error::ReferenceTypeId(x)),
+        }
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        match self {
+            ReferenceType::FuncRef => wr.write_all(&[0x70]),
+            ReferenceType::ExternRef => wr.write_all(&[0x6F]),
         }
     }
 }
@@ -72,6 +82,18 @@ impl ValueType {
             x => Err(Error::ValueTypeId(x)),
         }
     }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        match self {
+            ValueType::I32 => wr.write_all(&[0x7F]),
+            ValueType::I64 => wr.write_all(&[0x7E]),
+            ValueType::F32 => wr.write_all(&[0x7D]),
+            ValueType::F64 => wr.write_all(&[0x7C]),
+            ValueType::V128 => wr.write_all(&[0x7B]),
+            ValueType::FuncRef => wr.write_all(&[0x70]),
+            ValueType::ExternRef => wr.write_all(&[0x6F]),
+        }
+    }
 }
 
 impl Display for ValueType {
@@ -106,6 +128,10 @@ impl ResultType {
         }
 
         Ok((Self(v), it.finalize()))
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        wr.write_vector(&self.0, ValueType::write_into)
     }
 }
 
@@ -149,6 +175,13 @@ impl FuncType {
         ))
     }
 
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        wr.write_all(&[0x60])?;
+        self.param.write_into(wr)?;
+        self.result.write_into(wr)?;
+        Ok(())
+    }
+
     pub fn param(&self) -> &ResultType {
         &self.param
     }
@@ -186,6 +219,22 @@ impl Limits {
             x => Err(Error::LimitsTag(x)),
         }
     }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        match *self {
+            Limits::Unbounded { min } => {
+                wr.write_all(&[0x00])?;
+                wr.write_u32(min)?;
+                Ok(())
+            }
+            Limits::Bounded { min, max } => {
+                wr.write_all(&[0x01])?;
+                wr.write_u32(min)?;
+                wr.write_u32(max)?;
+                Ok(())
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -196,6 +245,10 @@ pub struct MemType {
 impl MemType {
     pub(crate) fn from_bytes(bytes: &[u8]) -> Result<(Self, &[u8]), Error> {
         Limits::from_bytes(bytes).map(|(l, bytes)| (Self { size: l }, bytes))
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        self.size.write_into(wr)
     }
 
     pub fn size(&self) -> &Limits {
@@ -215,6 +268,12 @@ impl TableType {
         let element = ReferenceType::from_byte(element)?;
         let (limits, bytes) = Limits::from_bytes(bytes)?;
         Ok((Self { element, limits }, bytes))
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        self.element.write_into(&mut wr)?;
+        self.limits.write_into(&mut wr)?;
+        Ok(())
     }
 
     pub fn element(&self) -> ReferenceType {
@@ -244,5 +303,11 @@ impl GlobalType {
         };
 
         Ok((Self { ty, mutable }, bytes))
+    }
+
+    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+        self.ty.write_into(&mut wr)?;
+        wr.write_all(&[u8::from(self.mutable)])?;
+        Ok(())
     }
 }

@@ -366,29 +366,25 @@ mod tests {
                 x == y
             }) && rest.is_empty()
         }
-    }
 
-    #[test]
-    fn test_advance_vector() {
-        let x: &[u8] = &[3, 2, 1, 2];
-        let mut bytes = Vec::new();
-        bytes
-            .write_vector(x, |bytes, x| bytes.write_all(&[*x]))
-            .unwrap();
-        let bytes = "\x03\x02\x01\x02".as_bytes();
-        let mut sum = 0;
-        let mut numbers = bytes
-            .advance_vector(|x| {
-                let (&[n], x) = x.advance()?;
-                Ok((n, x))
-            })
-            .unwrap();
+        fn test_advance_vector(x: Vec<u8>) -> bool {
+            let mut bytes = Vec::new();
+            bytes.write_u32(x.len().try_into().unwrap()).unwrap();
+            bytes.write_all(&x).unwrap();
+            let mut numbers = bytes
+                .advance_vector(|x| {
+                    let (&[n], x) = x.advance()?;
+                    Ok((n, x))
+                })
+                .unwrap();
 
-        for number in &mut numbers {
-            sum += number.unwrap();
+            for (i, number) in (&mut numbers).enumerate() {
+                if number.unwrap() != x[i] {
+                    return false;
+                }
+            }
+            numbers.finalize().is_empty()
         }
-        assert_eq!(sum, 5);
-        assert_eq!(numbers.finalize(), &[]);
     }
 
     #[test]

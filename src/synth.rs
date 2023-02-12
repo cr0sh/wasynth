@@ -2,5 +2,7 @@
 //!
 //! All types matching [`crate::parse`] should have `Synth` prefixes in its name.
 
-/// A 'synthesizing' WebAssembly module.
+pub mod sections;
+
+/// A WebAssembly module synthesizer.
 pub struct SynthModule {}

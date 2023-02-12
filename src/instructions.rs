@@ -539,35 +539,35 @@ impl Instruction {
             0x01 => Ok((Self::Nop, bytes)),
             0x02 => {
                 let (bt, bytes) = BlockType::from_bytes(bytes)?;
-                let (instrs, _, bytes) = Self::from_bytes_vec(bytes, &[0x0b])?;
+                let (instrs, _, bytes) = Self::from_bytes_vec(bytes, &[0x0B])?;
                 Ok((Self::Block(bt, instrs), bytes))
             }
             0x03 => {
                 let (bt, bytes) = BlockType::from_bytes(bytes)?;
-                let (instrs, _, bytes) = Self::from_bytes_vec(bytes, &[0x0b])?;
+                let (instrs, _, bytes) = Self::from_bytes_vec(bytes, &[0x0B])?;
                 Ok((Self::Loop(bt, instrs), bytes))
             }
             0x04 => {
                 let (bt, bytes) = BlockType::from_bytes(bytes)?;
-                let (instrs, end, bytes) = Self::from_bytes_vec(bytes, &[0x05, 0x0b])?;
+                let (instrs, end, bytes) = Self::from_bytes_vec(bytes, &[0x05, 0x0B])?;
                 match end {
                     0x05 => {
-                        let (elseinstrs, _, bytes) = Self::from_bytes_vec(bytes, &[0x0b])?;
+                        let (elseinstrs, _, bytes) = Self::from_bytes_vec(bytes, &[0x0B])?;
                         Ok((Self::If(bt, instrs, Some(elseinstrs)), bytes))
                     }
-                    0x0b => Ok((Self::If(bt, instrs, None), bytes)),
+                    0x0B => Ok((Self::If(bt, instrs, None), bytes)),
                     _ => unreachable!(),
                 }
             }
-            0x0c => {
+            0x0C => {
                 let (li, bytes) = bytes.advance_u32()?;
                 Ok((Self::Br(li), bytes))
             }
-            0x0d => {
+            0x0D => {
                 let (li, bytes) = bytes.advance_u32()?;
                 Ok((Self::BrIf(li), bytes))
             }
-            0x0e => {
+            0x0E => {
                 let mut liit = bytes.advance_vector(<&[u8]>::advance_u32)?;
                 let mut lis = Vec::new();
                 for li in &mut liit {
@@ -577,7 +577,7 @@ impl Instruction {
                 let (ln, bytes) = bytes.advance_u32()?;
                 Ok((Self::BrTable(lis, ln), bytes))
             }
-            0x0f => Ok((Self::Return, bytes)),
+            0x0F => Ok((Self::Return, bytes)),
             0x10 => {
                 let (fi, bytes) = bytes.advance_u32()?;
                 Ok((Self::Call(fi), bytes))
@@ -587,19 +587,19 @@ impl Instruction {
                 let (table, bytes) = bytes.advance_u32()?;
                 Ok((Self::CallIndirect { ty, table }, bytes))
             }
-            0xd0 => {
+            0xD0 => {
                 let (&[rt], bytes) = bytes.advance()?;
                 let rt = ReferenceType::from_byte(rt)?;
                 Ok((Self::RefNull(rt), bytes))
             }
-            0xd1 => Ok((Self::RefIsNull, bytes)),
-            0xd2 => {
+            0xD1 => Ok((Self::RefIsNull, bytes)),
+            0xD2 => {
                 let (fi, bytes) = bytes.advance_u32()?;
                 Ok((Self::RefFunc(fi), bytes))
             }
-            0x1a => Ok((Self::Drop, bytes)),
-            0x1b => Ok((Self::SelectNumeric, bytes)),
-            0x1c => {
+            0x1A => Ok((Self::Drop, bytes)),
+            0x1B => Ok((Self::SelectNumeric, bytes)),
+            0x1C => {
                 let mut vtit = bytes.advance_vector(|x| {
                     let (&[x], bytes) = x.advance()?;
                     Ok((ValueType::from_byte(x)?, bytes))
@@ -711,30 +711,30 @@ impl Instruction {
                 let (ma, bytes) = MemArg::from_bytes(bytes)?;
                 Ok((Self::F64Store(ma), bytes))
             }
-            0x3a => {
+            0x3A => {
                 let (ma, bytes) = MemArg::from_bytes(bytes)?;
                 Ok((Self::I32Store8(ma), bytes))
             }
-            0x3b => {
+            0x3B => {
                 let (ma, bytes) = MemArg::from_bytes(bytes)?;
                 Ok((Self::I32Store16(ma), bytes))
             }
-            0x3c => {
+            0x3C => {
                 let (ma, bytes) = MemArg::from_bytes(bytes)?;
                 Ok((Self::I64Store8(ma), bytes))
             }
-            0x3d => {
+            0x3D => {
                 let (ma, bytes) = MemArg::from_bytes(bytes)?;
                 Ok((Self::I64Store16(ma), bytes))
             }
-            0x3e => {
+            0x3E => {
                 let (ma, bytes) = MemArg::from_bytes(bytes)?;
                 Ok((Self::I64Store32(ma), bytes))
             }
-            0x3f => {
+            0x3F => {
                 let (&[zero], bytes) = bytes.advance()?;
                 if zero != 0x00 {
-                    return Err(Error::MemoryInstruction(0x3f, zero));
+                    return Err(Error::MemoryInstruction(0x3F, zero));
                 }
                 Ok((Self::MemorySize, bytes))
             }
@@ -766,12 +766,12 @@ impl Instruction {
             0x47 => Ok((Self::I32Ne, bytes)),
             0x48 => Ok((Self::I32LtS, bytes)),
             0x49 => Ok((Self::I32LtU, bytes)),
-            0x4a => Ok((Self::I32GtS, bytes)),
-            0x4b => Ok((Self::I32GtU, bytes)),
-            0x4c => Ok((Self::I32LeS, bytes)),
-            0x4d => Ok((Self::I32LeU, bytes)),
-            0x4e => Ok((Self::I32GeS, bytes)),
-            0x4f => Ok((Self::I32GeU, bytes)),
+            0x4A => Ok((Self::I32GtS, bytes)),
+            0x4B => Ok((Self::I32GtU, bytes)),
+            0x4C => Ok((Self::I32LeS, bytes)),
+            0x4D => Ok((Self::I32LeU, bytes)),
+            0x4E => Ok((Self::I32GeS, bytes)),
+            0x4F => Ok((Self::I32GeU, bytes)),
             0x50 => Ok((Self::I64Eqz, bytes)),
             0x51 => Ok((Self::I64Eq, bytes)),
             0x52 => Ok((Self::I64Ne, bytes)),
@@ -782,12 +782,12 @@ impl Instruction {
             0x57 => Ok((Self::I64LeS, bytes)),
             0x58 => Ok((Self::I64LeU, bytes)),
             0x59 => Ok((Self::I64GeS, bytes)),
-            0x5a => Ok((Self::I64GeU, bytes)),
-            0x5b => Ok((Self::F32Eq, bytes)),
-            0x5c => Ok((Self::F32Ne, bytes)),
-            0x5d => Ok((Self::F32Lt, bytes)),
-            0x5e => Ok((Self::F32Gt, bytes)),
-            0x5f => Ok((Self::F32Le, bytes)),
+            0x5A => Ok((Self::I64GeU, bytes)),
+            0x5B => Ok((Self::F32Eq, bytes)),
+            0x5C => Ok((Self::F32Ne, bytes)),
+            0x5D => Ok((Self::F32Lt, bytes)),
+            0x5E => Ok((Self::F32Gt, bytes)),
+            0x5F => Ok((Self::F32Le, bytes)),
             0x60 => Ok((Self::F32Ge, bytes)),
             0x61 => Ok((Self::F64Eq, bytes)),
             0x62 => Ok((Self::F64Ne, bytes)),
@@ -798,12 +798,12 @@ impl Instruction {
             0x67 => Ok((Self::I32Clz, bytes)),
             0x68 => Ok((Self::I32Ctz, bytes)),
             0x69 => Ok((Self::I32Popcnt, bytes)),
-            0x6a => Ok((Self::I32Add, bytes)),
-            0x6b => Ok((Self::I32Sub, bytes)),
-            0x6c => Ok((Self::I32Mul, bytes)),
-            0x6d => Ok((Self::I32DivS, bytes)),
-            0x6e => Ok((Self::I32DivU, bytes)),
-            0x6f => Ok((Self::I32RemS, bytes)),
+            0x6A => Ok((Self::I32Add, bytes)),
+            0x6B => Ok((Self::I32Sub, bytes)),
+            0x6C => Ok((Self::I32Mul, bytes)),
+            0x6D => Ok((Self::I32DivS, bytes)),
+            0x6E => Ok((Self::I32DivU, bytes)),
+            0x6F => Ok((Self::I32RemS, bytes)),
             0x70 => Ok((Self::I32RemU, bytes)),
             0x71 => Ok((Self::I32And, bytes)),
             0x72 => Ok((Self::I32Or, bytes)),
@@ -814,12 +814,12 @@ impl Instruction {
             0x77 => Ok((Self::I32Rotl, bytes)),
             0x78 => Ok((Self::I32Rotr, bytes)),
             0x79 => Ok((Self::I64Clz, bytes)),
-            0x7a => Ok((Self::I64Ctz, bytes)),
-            0x7b => Ok((Self::I64Popcnt, bytes)),
-            0x7c => Ok((Self::I64Add, bytes)),
-            0x7d => Ok((Self::I64Sub, bytes)),
-            0x7e => Ok((Self::I64Mul, bytes)),
-            0x7f => Ok((Self::I64DivS, bytes)),
+            0x7A => Ok((Self::I64Ctz, bytes)),
+            0x7B => Ok((Self::I64Popcnt, bytes)),
+            0x7C => Ok((Self::I64Add, bytes)),
+            0x7D => Ok((Self::I64Sub, bytes)),
+            0x7E => Ok((Self::I64Mul, bytes)),
+            0x7F => Ok((Self::I64DivS, bytes)),
             0x80 => Ok((Self::I64DivU, bytes)),
             0x81 => Ok((Self::I64RemS, bytes)),
             0x82 => Ok((Self::I64RemU, bytes)),
@@ -830,12 +830,12 @@ impl Instruction {
             0x87 => Ok((Self::I64ShrS, bytes)),
             0x88 => Ok((Self::I64ShrU, bytes)),
             0x89 => Ok((Self::I64Rotl, bytes)),
-            0x8a => Ok((Self::I64Rotr, bytes)),
-            0x8b => Ok((Self::F32Abs, bytes)),
-            0x8c => Ok((Self::F32Neg, bytes)),
-            0x8d => Ok((Self::F32Ceil, bytes)),
-            0x8e => Ok((Self::F32Floor, bytes)),
-            0x8f => Ok((Self::F32Trunc, bytes)),
+            0x8A => Ok((Self::I64Rotr, bytes)),
+            0x8B => Ok((Self::F32Abs, bytes)),
+            0x8C => Ok((Self::F32Neg, bytes)),
+            0x8D => Ok((Self::F32Ceil, bytes)),
+            0x8E => Ok((Self::F32Floor, bytes)),
+            0x8F => Ok((Self::F32Trunc, bytes)),
             0x90 => Ok((Self::F32Nearest, bytes)),
             0x91 => Ok((Self::F32Sqrt, bytes)),
             0x92 => Ok((Self::F32Add, bytes)),
@@ -846,50 +846,50 @@ impl Instruction {
             0x97 => Ok((Self::F32Max, bytes)),
             0x98 => Ok((Self::F32Copysign, bytes)),
             0x99 => Ok((Self::F64Abs, bytes)),
-            0x9a => Ok((Self::F64Neg, bytes)),
-            0x9b => Ok((Self::F64Ceil, bytes)),
-            0x9c => Ok((Self::F64Floor, bytes)),
-            0x9d => Ok((Self::F64Trunc, bytes)),
-            0x9e => Ok((Self::F64Nearest, bytes)),
-            0x9f => Ok((Self::F64Sqrt, bytes)),
-            0xa0 => Ok((Self::F64Add, bytes)),
-            0xa1 => Ok((Self::F64Sub, bytes)),
-            0xa2 => Ok((Self::F64Mul, bytes)),
-            0xa3 => Ok((Self::F64Div, bytes)),
-            0xa4 => Ok((Self::F64Min, bytes)),
-            0xa5 => Ok((Self::F64Max, bytes)),
-            0xa6 => Ok((Self::F64Copysign, bytes)),
-            0xa7 => Ok((Self::I32WrapI64, bytes)),
-            0xa8 => Ok((Self::I32TruncF32S, bytes)),
-            0xa9 => Ok((Self::I32TruncF32U, bytes)),
-            0xaa => Ok((Self::I32TruncF64S, bytes)),
-            0xab => Ok((Self::I32TruncF64U, bytes)),
-            0xac => Ok((Self::I64ExtendI32S, bytes)),
-            0xad => Ok((Self::I64ExtendI32U, bytes)),
-            0xae => Ok((Self::I64TruncF32S, bytes)),
-            0xaf => Ok((Self::I64TruncF32U, bytes)),
-            0xb0 => Ok((Self::I64TruncF64S, bytes)),
-            0xb1 => Ok((Self::I64TruncF64U, bytes)),
-            0xb2 => Ok((Self::F32ConvertI32S, bytes)),
-            0xb3 => Ok((Self::F32ConvertI32U, bytes)),
-            0xb4 => Ok((Self::F32ConvertI64S, bytes)),
-            0xb5 => Ok((Self::F32ConvertI64U, bytes)),
-            0xb6 => Ok((Self::F32DemoteF64, bytes)),
-            0xb7 => Ok((Self::F64ConvertI32S, bytes)),
-            0xb8 => Ok((Self::F64ConvertI32U, bytes)),
-            0xb9 => Ok((Self::F64ConvertI64S, bytes)),
-            0xba => Ok((Self::F64ConvertI64U, bytes)),
-            0xbb => Ok((Self::F64PromoteF32, bytes)),
-            0xbc => Ok((Self::I32ReinterpretF32, bytes)),
-            0xbd => Ok((Self::I64ReinterpretF64, bytes)),
-            0xbe => Ok((Self::F32ReinterpretI32, bytes)),
-            0xbf => Ok((Self::F64ReinterpretI64, bytes)),
-            0xc0 => Ok((Self::I32Extend8S, bytes)),
-            0xc1 => Ok((Self::I32Extend16S, bytes)),
-            0xc2 => Ok((Self::I64Extend8S, bytes)),
-            0xc3 => Ok((Self::I64Extend16S, bytes)),
-            0xc4 => Ok((Self::I64Extend32S, bytes)),
-            0xfc => {
+            0x9A => Ok((Self::F64Neg, bytes)),
+            0x9B => Ok((Self::F64Ceil, bytes)),
+            0x9C => Ok((Self::F64Floor, bytes)),
+            0x9D => Ok((Self::F64Trunc, bytes)),
+            0x9E => Ok((Self::F64Nearest, bytes)),
+            0x9F => Ok((Self::F64Sqrt, bytes)),
+            0xA0 => Ok((Self::F64Add, bytes)),
+            0xA1 => Ok((Self::F64Sub, bytes)),
+            0xA2 => Ok((Self::F64Mul, bytes)),
+            0xA3 => Ok((Self::F64Div, bytes)),
+            0xA4 => Ok((Self::F64Min, bytes)),
+            0xA5 => Ok((Self::F64Max, bytes)),
+            0xA6 => Ok((Self::F64Copysign, bytes)),
+            0xA7 => Ok((Self::I32WrapI64, bytes)),
+            0xA8 => Ok((Self::I32TruncF32S, bytes)),
+            0xA9 => Ok((Self::I32TruncF32U, bytes)),
+            0xAA => Ok((Self::I32TruncF64S, bytes)),
+            0xAB => Ok((Self::I32TruncF64U, bytes)),
+            0xAC => Ok((Self::I64ExtendI32S, bytes)),
+            0xAD => Ok((Self::I64ExtendI32U, bytes)),
+            0xAE => Ok((Self::I64TruncF32S, bytes)),
+            0xAF => Ok((Self::I64TruncF32U, bytes)),
+            0xB0 => Ok((Self::I64TruncF64S, bytes)),
+            0xB1 => Ok((Self::I64TruncF64U, bytes)),
+            0xB2 => Ok((Self::F32ConvertI32S, bytes)),
+            0xB3 => Ok((Self::F32ConvertI32U, bytes)),
+            0xB4 => Ok((Self::F32ConvertI64S, bytes)),
+            0xB5 => Ok((Self::F32ConvertI64U, bytes)),
+            0xB6 => Ok((Self::F32DemoteF64, bytes)),
+            0xB7 => Ok((Self::F64ConvertI32S, bytes)),
+            0xB8 => Ok((Self::F64ConvertI32U, bytes)),
+            0xB9 => Ok((Self::F64ConvertI64S, bytes)),
+            0xBA => Ok((Self::F64ConvertI64U, bytes)),
+            0xBB => Ok((Self::F64PromoteF32, bytes)),
+            0xBC => Ok((Self::I32ReinterpretF32, bytes)),
+            0xBD => Ok((Self::I64ReinterpretF64, bytes)),
+            0xBE => Ok((Self::F32ReinterpretI32, bytes)),
+            0xBF => Ok((Self::F64ReinterpretI64, bytes)),
+            0xC0 => Ok((Self::I32Extend8S, bytes)),
+            0xC1 => Ok((Self::I32Extend16S, bytes)),
+            0xC2 => Ok((Self::I64Extend8S, bytes)),
+            0xC3 => Ok((Self::I64Extend16S, bytes)),
+            0xC4 => Ok((Self::I64Extend32S, bytes)),
+            0xFC => {
                 let (subop, bytes) = bytes.advance_u32()?;
                 match subop {
                     0 => Ok((Self::I32TruncSatF32S, bytes)),
@@ -1370,7 +1370,7 @@ pub struct Expression(Vec<Instruction>);
 impl Expression {
     pub(crate) fn from_bytes(bytes: &[u8]) -> Result<(Self, &[u8]), Error> {
         log::trace!("expression from bytes: start reading instructions");
-        let (instrs, _, bytes) = Instruction::from_bytes_vec(bytes, &[0x0b])?;
+        let (instrs, _, bytes) = Instruction::from_bytes_vec(bytes, &[0x0B])?;
 
         Ok((Self(instrs), bytes))
     }

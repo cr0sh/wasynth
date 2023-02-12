@@ -15,6 +15,7 @@ impl ImportSection {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Import {
     pub(crate) module: String,
     pub(crate) name: String,

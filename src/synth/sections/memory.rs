@@ -3,11 +3,11 @@ use std::io::{self, Write};
 use crate::{wasm_types::MemType, WriteExt};
 
 #[derive(Clone, Debug)]
-pub struct MemorySection {
+pub struct SynthMemorySection {
     pub(crate) memories: Vec<MemType>,
 }
 
-impl MemorySection {
+impl SynthMemorySection {
     pub fn memories(&self) -> &[MemType] {
         self.memories.as_ref()
     }

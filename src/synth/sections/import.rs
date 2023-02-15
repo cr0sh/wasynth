@@ -6,32 +6,32 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-pub struct ImportSection {
-    pub(crate) imports: Vec<Import>,
+pub struct SynthImportSection {
+    pub(crate) imports: Vec<SynthImport>,
 }
 
-impl ImportSection {
-    pub fn imports(&self) -> &[Import] {
+impl SynthImportSection {
+    pub fn imports(&self) -> &[SynthImport] {
         self.imports.as_ref()
     }
 
-    pub fn imports_mut(&mut self) -> &mut Vec<Import> {
+    pub fn imports_mut(&mut self) -> &mut Vec<SynthImport> {
         &mut self.imports
     }
 
     pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
-        wr.write_vector(&self.imports, Import::write_into)
+        wr.write_vector(&self.imports, SynthImport::write_into)
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct Import {
+pub struct SynthImport {
     pub(crate) module: String,
     pub(crate) name: String,
-    pub(crate) description: ImportDescription,
+    pub(crate) description: SynthImportDescription,
 }
 
-impl Import {
+impl SynthImport {
     pub fn module(&self) -> &str {
         self.module.as_ref()
     }
@@ -48,11 +48,11 @@ impl Import {
         &mut self.name
     }
 
-    pub fn description(&self) -> ImportDescription {
+    pub fn description(&self) -> SynthImportDescription {
         self.description
     }
 
-    pub fn description_mut(&mut self) -> &mut ImportDescription {
+    pub fn description_mut(&mut self) -> &mut SynthImportDescription {
         &mut self.description
     }
 
@@ -65,32 +65,32 @@ impl Import {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ImportDescription {
+pub enum SynthImportDescription {
     Type(u32),
     Table(TableType),
     Memory(MemType),
     Global(GlobalType),
 }
 
-impl ImportDescription {
+impl SynthImportDescription {
     pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
         match self {
-            ImportDescription::Type(x) => {
+            SynthImportDescription::Type(x) => {
                 wr.write_all(&[0x00])?;
                 wr.write_u32(*x)?;
                 Ok(())
             }
-            ImportDescription::Table(x) => {
+            SynthImportDescription::Table(x) => {
                 wr.write_all(&[0x00])?;
                 x.write_into(wr)?;
                 Ok(())
             }
-            ImportDescription::Memory(x) => {
+            SynthImportDescription::Memory(x) => {
                 wr.write_all(&[0x00])?;
                 x.write_into(wr)?;
                 Ok(())
             }
-            ImportDescription::Global(x) => {
+            SynthImportDescription::Global(x) => {
                 wr.write_all(&[0x00])?;
                 x.write_into(wr)?;
                 Ok(())

@@ -3,11 +3,11 @@ use std::io::{self, Write};
 use crate::{wasm_types::TableType, WriteExt};
 
 #[derive(Clone, Debug)]
-pub struct TableSection {
+pub struct SynthTableSection {
     pub(crate) tables: Vec<TableType>,
 }
 
-impl TableSection {
+impl SynthTableSection {
     pub fn tables(&self) -> &[TableType] {
         self.tables.as_ref()
     }

@@ -3,26 +3,26 @@ use std::io::{self, Write};
 use crate::{instructions::Expression, WriteExt};
 
 #[derive(Clone, Debug)]
-pub struct DataSection {
-    pub(crate) all_data: Vec<Data>,
+pub struct SynthDataSection {
+    pub(crate) all_data: Vec<SynthData>,
 }
 
-impl DataSection {
-    pub fn all_data(&self) -> &[Data] {
+impl SynthDataSection {
+    pub fn all_data(&self) -> &[SynthData] {
         self.all_data.as_ref()
     }
 
-    pub fn all_data_mut(&mut self) -> &mut Vec<Data> {
+    pub fn all_data_mut(&mut self) -> &mut Vec<SynthData> {
         &mut self.all_data
     }
 
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
-        wr.write_vector(&self.all_data, Data::write_into)
+        wr.write_vector(&self.all_data, SynthData::write_into)
     }
 }
 
 #[derive(Clone, Debug)]
-pub enum Data {
+pub enum SynthData {
     Active {
         init: Vec<u8>,
         memory_index: u32,
@@ -31,10 +31,10 @@ pub enum Data {
     Passive(Vec<u8>),
 }
 
-impl Data {
+impl SynthData {
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         match self {
-            Data::Active {
+            SynthData::Active {
                 init,
                 memory_index,
                 offset,
@@ -43,11 +43,11 @@ impl Data {
                 offset.write_into(wr)?;
                 wr.write_all(init)?;
             }
-            Data::Passive(init) => {
+            SynthData::Passive(init) => {
                 wr.write_u32(0)?;
                 wr.write_all(init)?;
             }
-            Data::Active {
+            SynthData::Active {
                 init,
                 memory_index,
                 offset,

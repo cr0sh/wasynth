@@ -3,11 +3,11 @@ use std::io::{self, Write};
 use crate::WriteExt;
 
 #[derive(Clone, Debug)]
-pub struct FunctionSection {
+pub struct SynthFunctionSection {
     pub(crate) type_indices: Vec<u32>,
 }
 
-impl FunctionSection {
+impl SynthFunctionSection {
     pub fn type_indices(&self) -> &[u32] {
         self.type_indices.as_ref()
     }

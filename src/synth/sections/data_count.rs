@@ -3,11 +3,11 @@ use std::io::{self, Write};
 use crate::WriteExt;
 
 #[derive(Clone, Debug)]
-pub struct DataCountSection {
+pub struct SynthDataCountSection {
     pub(crate) data_count: u32,
 }
 
-impl DataCountSection {
+impl SynthDataCountSection {
     pub fn data_count(&self) -> u32 {
         self.data_count
     }

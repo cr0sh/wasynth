@@ -3,11 +3,11 @@ use std::io::{self, Write};
 use crate::{wasm_types::FuncType, WriteExt};
 
 #[derive(Clone, Debug)]
-pub struct TypeSection {
+pub struct SynthTypeSection {
     pub(crate) types: Vec<FuncType>,
 }
 
-impl TypeSection {
+impl SynthTypeSection {
     pub fn types(&self) -> &[FuncType] {
         self.types.as_ref()
     }

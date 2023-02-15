@@ -3,12 +3,12 @@ use std::io::{self, Write};
 use crate::WriteExt;
 
 #[derive(Clone, Debug)]
-pub struct CustomSection {
+pub struct SynthCustomSection {
     pub(crate) name: String,
     pub(crate) bytes: Vec<u8>,
 }
 
-impl CustomSection {
+impl SynthCustomSection {
     pub fn name(&self) -> &str {
         self.name.as_ref()
     }

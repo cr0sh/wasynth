@@ -3,31 +3,31 @@ use std::io::{self, Write};
 use crate::{instructions::Expression, wasm_types::ValueType, WriteExt};
 
 #[derive(Clone, Debug)]
-pub struct CodeSection {
-    pub(crate) codes: Vec<Code>,
+pub struct SynthCodeSection {
+    pub(crate) codes: Vec<SynthCode>,
 }
 
-impl CodeSection {
-    pub fn codes(&self) -> &[Code] {
+impl SynthCodeSection {
+    pub fn codes(&self) -> &[SynthCode] {
         self.codes.as_ref()
     }
 
-    pub fn codes_mut(&mut self) -> &mut Vec<Code> {
+    pub fn codes_mut(&mut self) -> &mut Vec<SynthCode> {
         &mut self.codes
     }
 
     pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
-        wr.write_vector(&self.codes, Code::write_into)
+        wr.write_vector(&self.codes, SynthCode::write_into)
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct Code {
+pub struct SynthCode {
     locals: Vec<ValueType>,
     func_expr: Expression,
 }
 
-impl Code {
+impl SynthCode {
     pub fn func_expr(&self) -> &Expression {
         &self.func_expr
     }

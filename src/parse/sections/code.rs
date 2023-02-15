@@ -1,6 +1,11 @@
 use std::fmt::Debug;
 
-use crate::{instructions::Expression, wasm_types::ValueType, Bytes, Error};
+use crate::{
+    instructions::Expression,
+    synth::sections::{SynthCode, SynthCodeSection},
+    wasm_types::ValueType,
+    Bytes, Error,
+};
 
 #[derive(Clone, Copy)]
 pub struct CodeSection<'bytes> {
@@ -10,6 +15,15 @@ pub struct CodeSection<'bytes> {
 impl<'bytes> CodeSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> Result<SynthCodeSection, Error> {
+        Ok(SynthCodeSection {
+            codes: self
+                .codes()?
+                .map(|x| x.map(Code::into_synth))
+                .collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 
     pub fn codes(&self) -> Result<impl Iterator<Item = Result<Code, Error>> + '_, Error> {
@@ -57,6 +71,19 @@ impl Code {
             },
             &bytes[size_u..],
         ))
+    }
+
+    pub(crate) fn into_synth(self) -> SynthCode {
+        let mut locals = Vec::new();
+        for Local { n, t } in self.locals {
+            for i in 0..n {
+                locals.push(t);
+            }
+        }
+        SynthCode {
+            locals,
+            func_expr: self.func_expr,
+        }
     }
 }
 

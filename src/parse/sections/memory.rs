@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{wasm_types::MemType, Bytes, Error};
+use crate::{synth::sections::SynthMemorySection, wasm_types::MemType, Bytes, Error};
 
 #[derive(Clone, Copy)]
 pub struct MemorySection<'bytes> {
@@ -10,6 +10,12 @@ pub struct MemorySection<'bytes> {
 impl<'bytes> MemorySection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> Result<SynthMemorySection, Error> {
+        Ok(SynthMemorySection {
+            memories: self.memories()?.collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 
     pub fn memories(&self) -> Result<impl Iterator<Item = Result<MemType, Error>> + '_, Error> {

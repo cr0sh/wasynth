@@ -1,6 +1,10 @@
 use std::fmt::Debug;
 
-use crate::{instructions::Expression, Bytes, Error};
+use crate::{
+    instructions::Expression,
+    synth::sections::{SynthData, SynthDataSection},
+    Bytes, Error,
+};
 
 #[derive(Clone, Copy)]
 pub struct DataSection<'bytes> {
@@ -10,6 +14,15 @@ pub struct DataSection<'bytes> {
 impl<'bytes> DataSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> Result<SynthDataSection, Error> {
+        Ok(SynthDataSection {
+            all_data: self
+                .all_data()?
+                .map(|x| x.map(Data::into_synth))
+                .collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 
     pub fn all_data(
@@ -75,6 +88,21 @@ impl<'bytes> Data<'bytes> {
                 ))
             }
             _ => Err(Error::DataSectionTag(tag)),
+        }
+    }
+
+    pub(crate) fn into_synth(self) -> SynthData {
+        match self {
+            Data::Active {
+                init,
+                memory_index,
+                offset,
+            } => SynthData::Active {
+                init: init.to_owned(),
+                memory_index,
+                offset,
+            },
+            Data::Passive(bytes) => SynthData::Passive(bytes.to_owned()),
         }
     }
 }

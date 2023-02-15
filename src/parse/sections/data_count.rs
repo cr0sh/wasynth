@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{Bytes, Error};
+use crate::{synth::sections::SynthDataCountSection, Bytes, Error};
 
 #[derive(Clone, Copy)]
 pub struct DataCountSection {
@@ -11,6 +11,12 @@ impl DataCountSection {
     pub(crate) fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         let (data_count, bytes) = bytes.advance_u32()?;
         Ok(Self { data_count })
+    }
+
+    pub(crate) fn into_synth(self) -> SynthDataCountSection {
+        SynthDataCountSection {
+            data_count: self.data_count,
+        }
     }
 
     pub fn data_count(&self) -> u32 {

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{Bytes, Error};
+use crate::{synth::sections::SynthCustomSection, Bytes, Error};
 
 #[derive(Clone, Copy)]
 pub struct CustomSection<'bytes> {
@@ -20,6 +20,13 @@ impl<'bytes> CustomSection<'bytes> {
 
     pub fn bytes(&self) -> &[u8] {
         self.bytes
+    }
+
+    pub(crate) fn into_synth(self) -> SynthCustomSection {
+        SynthCustomSection {
+            name: self.name.to_owned(),
+            bytes: self.bytes.to_owned(),
+        }
     }
 }
 

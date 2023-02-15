@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{wasm_types::TableType, Bytes, Error};
+use crate::{synth::sections::SynthTableSection, wasm_types::TableType, Bytes, Error};
 
 #[derive(Clone, Copy)]
 pub struct TableSection<'bytes> {
@@ -10,6 +10,12 @@ pub struct TableSection<'bytes> {
 impl<'bytes> TableSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> Result<SynthTableSection, Error> {
+        Ok(SynthTableSection {
+            tables: self.tables()?.collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 
     pub fn tables(&self) -> Result<impl Iterator<Item = Result<TableType, Error>> + '_, Error> {

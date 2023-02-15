@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{wasm_types::GlobalType, Error};
+use crate::{synth::sections::SynthGlobalSection, wasm_types::GlobalType, Error};
 
 #[derive(Clone, Copy)]
 pub struct GlobalSection<'bytes> {
@@ -10,6 +10,12 @@ pub struct GlobalSection<'bytes> {
 impl<'bytes> GlobalSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> SynthGlobalSection {
+        SynthGlobalSection {
+            bytes: self.bytes.to_owned(),
+        }
     }
 }
 

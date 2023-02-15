@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use crate::{
+    synth::sections::{SynthImport, SynthImportDescription, SynthImportSection},
     wasm_types::{GlobalType, MemType, TableType},
     Bytes, Error,
 };
@@ -13,6 +14,15 @@ pub struct ImportSection<'bytes> {
 impl<'bytes> ImportSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> Result<SynthImportSection, Error> {
+        Ok(SynthImportSection {
+            imports: self
+                .imports()?
+                .map(|x| x.map(Import::into_synth))
+                .collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 
     pub fn imports(&self) -> Result<impl Iterator<Item = Result<Import, Error>> + '_, Error> {
@@ -46,6 +56,14 @@ impl<'bytes> Import<'bytes> {
             },
             bytes,
         ))
+    }
+
+    pub(crate) fn into_synth(self) -> SynthImport {
+        SynthImport {
+            module: self.module.to_owned(),
+            name: self.name.to_owned(),
+            description: self.description.into_synth(),
+        }
     }
 
     pub fn module(&self) -> &str {
@@ -90,6 +108,15 @@ impl ImportDescription {
                 Ok((Self::Global(global), bytes))
             }
             x => Err(Error::ImportDescriptionTag(x)),
+        }
+    }
+
+    pub(crate) fn into_synth(self) -> SynthImportDescription {
+        match self {
+            ImportDescription::Type(x) => SynthImportDescription::Type(x),
+            ImportDescription::Table(tt) => SynthImportDescription::Table(tt),
+            ImportDescription::Memory(mt) => SynthImportDescription::Memory(mt),
+            ImportDescription::Global(gt) => SynthImportDescription::Global(gt),
         }
     }
 }

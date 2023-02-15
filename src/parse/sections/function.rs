@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{Bytes, Error};
+use crate::{synth::sections::SynthFunctionSection, Bytes, Error};
 
 #[derive(Clone, Copy)]
 pub struct FunctionSection<'bytes> {
@@ -10,6 +10,12 @@ pub struct FunctionSection<'bytes> {
 impl<'bytes> FunctionSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> Result<SynthFunctionSection, Error> {
+        Ok(SynthFunctionSection {
+            type_indices: self.type_indices()?.collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 
     pub fn type_indices(&self) -> Result<impl Iterator<Item = Result<u32, Error>> + '_, Error> {

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::Error;
+use crate::{synth::sections::SynthStartSection, Error};
 
 #[derive(Clone, Copy)]
 pub struct StartSection<'bytes> {
@@ -10,6 +10,12 @@ pub struct StartSection<'bytes> {
 impl<'bytes> StartSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
         Ok(Self { bytes })
+    }
+
+    pub(crate) fn into_synth(self) -> SynthStartSection {
+        SynthStartSection {
+            bytes: self.bytes.to_owned(),
+        }
     }
 }
 

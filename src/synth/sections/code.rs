@@ -23,8 +23,8 @@ impl SynthCodeSection {
 
 #[derive(Clone, Debug)]
 pub struct SynthCode {
-    locals: Vec<ValueType>,
-    func_expr: Expression,
+    pub(crate) locals: Vec<ValueType>,
+    pub(crate) func_expr: Expression,
 }
 
 impl SynthCode {

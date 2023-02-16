@@ -60,7 +60,7 @@ impl MemArg {
         Ok((Self { align, offset }, bytes))
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_u32(self.align)?;
         wr.write_u32(self.offset)?;
         Ok(())
@@ -1394,20 +1394,20 @@ impl Instruction {
             Instruction::Block(bt, instrs) => {
                 wr.write_all(&[0x02])?;
                 bt.write_into(wr)?;
-                Self::write_slice_into(&instrs, wr)?;
+                Self::write_slice_into(instrs, wr)?;
                 wr.write_all(&[0x0B])?;
             }
-            Instruction::Loop(bt, instrs) => {
+            Instruction::Loop(_bt, instrs) => {
                 wr.write_all(&[0x03])?;
-                Self::write_slice_into(&instrs, wr)?;
+                Self::write_slice_into(instrs, wr)?;
                 wr.write_all(&[0x0B])?;
             }
-            Instruction::If(bt, instrs, elseinstrs) => {
+            Instruction::If(_bt, instrs, elseinstrs) => {
                 wr.write_all(&[0x04])?;
-                Self::write_slice_into(&instrs, wr)?;
+                Self::write_slice_into(instrs, wr)?;
                 if let Some(elseinstrs) = elseinstrs {
                     wr.write_all(&[0x05])?;
-                    Self::write_slice_into(&elseinstrs, wr)?;
+                    Self::write_slice_into(elseinstrs, wr)?;
                     wr.write_all(&[0x0B])?;
                 } else {
                     wr.write_all(&[0x0B])?;
@@ -1421,9 +1421,9 @@ impl Instruction {
                 wr.write_all(&[0x0D])?;
                 wr.write_u32(*li)?;
             }
-            Instruction::BrTable(lis, ln) => {
+            Instruction::BrTable(lis, _ln) => {
                 wr.write_all(&[0x0E])?;
-                wr.write_vector(&lis, |x, wr| wr.write_u32(*x))?;
+                wr.write_vector(lis, |x, wr| wr.write_u32(*x))?;
             }
             Instruction::Return => {
                 wr.write_all(&[0x0F])?;
@@ -3083,7 +3083,7 @@ impl Expression {
         Ok((Self(instrs), bytes))
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         Instruction::write_slice_into(&self.0, wr)
     }
 

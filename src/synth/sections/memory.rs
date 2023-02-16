@@ -16,7 +16,7 @@ impl SynthMemorySection {
         &mut self.memories
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_vector(&self.memories, MemType::write_into)
     }
 }

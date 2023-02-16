@@ -19,7 +19,7 @@ impl SynthImportSection {
         &mut self.imports
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_vector(&self.imports, SynthImport::write_into)
     }
 }
@@ -56,7 +56,7 @@ impl SynthImport {
         &mut self.description
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_name(&self.module)?;
         wr.write_name(&self.name)?;
         self.description.write_into(wr)?;
@@ -73,7 +73,7 @@ pub enum SynthImportDescription {
 }
 
 impl SynthImportDescription {
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         match self {
             SynthImportDescription::Type(x) => {
                 wr.write_all(&[0x00])?;

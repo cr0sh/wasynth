@@ -39,7 +39,6 @@ impl<'bytes> Debug for CodeSection<'bytes> {
 
 #[derive(Clone, Debug)]
 pub struct Code {
-    size: u32,
     locals: Vec<Local>,
     func_expr: Expression,
 }
@@ -63,20 +62,13 @@ impl Code {
             return Err(Error::TrailingBytes);
         }
 
-        Ok((
-            Self {
-                size,
-                locals,
-                func_expr,
-            },
-            &bytes[size_u..],
-        ))
+        Ok((Self { locals, func_expr }, &bytes[size_u..]))
     }
 
     pub(crate) fn into_synth(self) -> SynthCode {
         let mut locals = Vec::new();
         for Local { n, t } in self.locals {
-            for i in 0..n {
+            for _i in 0..n {
                 locals.push(t);
             }
         }

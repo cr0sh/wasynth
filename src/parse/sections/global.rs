@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{synth::sections::SynthGlobalSection, wasm_types::GlobalType, Error};
+use crate::{synth::sections::SynthGlobalSection, Error};
 
 #[derive(Clone, Copy)]
 pub struct GlobalSection<'bytes> {

@@ -20,7 +20,7 @@ pub struct SynthModule {
 }
 
 impl SynthModule {
-    pub fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_all(WASM_MAGIC)?;
         wr.write_all(&WASM_VERSION.to_le_bytes())?;
 
@@ -50,7 +50,7 @@ pub enum SynthSection {
 }
 
 impl SynthSection {
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_all(&[self.id()])?;
 
         let mut buf = Vec::new();

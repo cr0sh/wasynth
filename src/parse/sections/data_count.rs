@@ -9,7 +9,7 @@ pub struct DataCountSection {
 
 impl DataCountSection {
     pub(crate) fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
-        let (data_count, bytes) = bytes.advance_u32()?;
+        let (data_count, _bytes) = bytes.advance_u32()?;
         Ok(Self { data_count })
     }
 

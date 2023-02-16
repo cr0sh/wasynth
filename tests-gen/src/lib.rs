@@ -49,18 +49,6 @@ fn generate_tests_inner() -> anyhow::Result<TokenStream> {
                 Span::call_site().into(),
             );
 
-            let const_name = Ident::new_raw(
-                &format!(
-                    "{}_CONTENTS",
-                    path.file_stem()
-                        .ok_or_else(|| anyhow!("no stem"))?
-                        .to_str()
-                        .ok_or_else(|| anyhow!("invalid stem"))?
-                        .to_uppercase(),
-                ),
-                Span::call_site().into(),
-            );
-
             match path.extension().and_then(OsStr::to_str) {
                 Some("wat") => Ok::<TokenStream, anyhow::Error>(
                     quote! {

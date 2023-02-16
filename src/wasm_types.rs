@@ -27,7 +27,7 @@ impl ReferenceType {
         }
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         match self {
             ReferenceType::FuncRef => wr.write_all(&[0x70]),
             ReferenceType::ExternRef => wr.write_all(&[0x6F]),
@@ -83,7 +83,7 @@ impl ValueType {
         }
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         match self {
             ValueType::I32 => wr.write_all(&[0x7F]),
             ValueType::I64 => wr.write_all(&[0x7E]),
@@ -130,7 +130,7 @@ impl ResultType {
         Ok((Self(v), it.finalize()))
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_vector(&self.0, ValueType::write_into)
     }
 }
@@ -175,7 +175,7 @@ impl FuncType {
         ))
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_all(&[0x60])?;
         self.param.write_into(wr)?;
         self.result.write_into(wr)?;
@@ -220,7 +220,7 @@ impl Limits {
         }
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         match *self {
             Limits::Unbounded { min } => {
                 wr.write_all(&[0x00])?;
@@ -247,7 +247,7 @@ impl MemType {
         Limits::from_bytes(bytes).map(|(l, bytes)| (Self { size: l }, bytes))
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         self.size.write_into(wr)
     }
 

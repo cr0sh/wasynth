@@ -16,7 +16,7 @@ impl SynthTableSection {
         &mut self.tables
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_vector(&self.tables, TableType::write_into)
     }
 }

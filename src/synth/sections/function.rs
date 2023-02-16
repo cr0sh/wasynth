@@ -16,7 +16,7 @@ impl SynthFunctionSection {
         &mut self.type_indices
     }
 
-    pub(crate) fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_vector(&self.type_indices, |x, wr| wr.write_u32(*x))
     }
 }

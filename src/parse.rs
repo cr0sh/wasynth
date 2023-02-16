@@ -99,7 +99,7 @@ impl<'bytes> Section<'bytes> {
     }
 
     /// Returns the ID of the section.
-    pub fn id(self) -> u32 {
+    pub fn id(self) -> u8 {
         match self {
             Self::Custom(..) => 0,
             Self::Type(..) => 1,

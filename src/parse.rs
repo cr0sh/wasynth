@@ -6,7 +6,10 @@ pub mod sections;
 
 use std::fmt::Debug;
 
-use crate::{Bytes, Error, WASM_MAGIC, WASM_VERSION};
+use crate::{
+    synth::{SynthModule, SynthSection},
+    Bytes, Error, WASM_MAGIC, WASM_VERSION,
+};
 use log::trace;
 use sections::{
     CodeSection, CustomSection, DataCountSection, DataSection, ElementSection, ExportSection,
@@ -48,6 +51,16 @@ impl<'bytes> Module<'bytes> {
         }
 
         Ok(Module { sections })
+    }
+
+    pub fn into_synth(self) -> Result<SynthModule, Error> {
+        Ok(SynthModule {
+            sections: self
+                .sections
+                .into_iter()
+                .map(Section::into_synth)
+                .collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 
     pub fn sections(&self) -> &[Section<'bytes>] {
@@ -96,6 +109,24 @@ impl<'bytes> Section<'bytes> {
         };
 
         Ok((section, rest))
+    }
+
+    pub fn into_synth(self) -> Result<SynthSection, Error> {
+        match self {
+            Section::Custom(x) => Ok(SynthSection::Custom(x.into_synth())),
+            Section::Type(x) => Ok(SynthSection::Type(x.into_synth()?)),
+            Section::Import(x) => Ok(SynthSection::Import(x.into_synth()?)),
+            Section::Function(x) => Ok(SynthSection::Function(x.into_synth()?)),
+            Section::Table(x) => Ok(SynthSection::Table(x.into_synth()?)),
+            Section::Memory(x) => Ok(SynthSection::Memory(x.into_synth()?)),
+            Section::Global(x) => Ok(SynthSection::Global(x.into_synth())),
+            Section::Export(x) => Ok(SynthSection::Export(x.into_synth())),
+            Section::Start(x) => Ok(SynthSection::Start(x.into_synth())),
+            Section::Element(x) => Ok(SynthSection::Element(x.into_synth())),
+            Section::Code(x) => Ok(SynthSection::Code(x.into_synth()?)),
+            Section::Data(x) => Ok(SynthSection::Data(x.into_synth()?)),
+            Section::DataCount(x) => Ok(SynthSection::DataCount(x.into_synth())),
+        }
     }
 
     /// Returns the ID of the section.

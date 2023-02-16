@@ -6,7 +6,7 @@ pub mod sections;
 
 use std::fmt::Debug;
 
-use crate::{Bytes, Error};
+use crate::{Bytes, Error, WASM_MAGIC, WASM_VERSION};
 use log::trace;
 use sections::{
     CodeSection, CustomSection, DataCountSection, DataSection, ElementSection, ExportSection,
@@ -22,14 +22,14 @@ pub struct Module<'bytes> {
 
 impl<'bytes> Module<'bytes> {
     pub fn from_binary(binary: &'bytes [u8]) -> Result<Self, Error> {
-        let (magic, binary) = binary.advance()?;
-        if magic != &[0x00, 0x61, 0x73, 0x6d] {
+        let (magic, binary) = binary.advance::<4>()?;
+        if magic != WASM_MAGIC {
             return Err(Error::Magic(magic[0], magic[1], magic[2], magic[3]));
         }
 
         let (version, mut binary) = binary.advance()?;
         let version = u32::from_le_bytes(*version);
-        if version != 1 {
+        if version != WASM_VERSION {
             return Err(Error::UnsupportedVersion(version));
         }
 

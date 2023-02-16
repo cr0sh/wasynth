@@ -11,6 +11,9 @@ use std::{
 use log::trace;
 use thiserror::Error;
 
+pub const WASM_MAGIC: &[u8] = &[0x00, 0x61, 0x73, 0x6d];
+pub const WASM_VERSION: u32 = 1;
+
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("unexpected end of file: expected {0} bytes, got {1}")]

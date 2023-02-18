@@ -17,6 +17,7 @@ fn parse_wat(wat_s: &str) -> Module {
 }
 
 fn parse_wasm(wasm: &[u8]) -> Module {
+    wasmparser::validate(&wasm).expect("pre-parse validation fail");
     wasynth::parse::Module::from_binary(wasm).expect("cannot parse wasm")
 }
 

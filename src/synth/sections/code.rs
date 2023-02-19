@@ -34,24 +34,24 @@ impl SynthCode {
 
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         let mut buf = Vec::new();
+        let mut locals = Vec::new();
         if let Some(mut ty) = self.locals.first().copied() {
             let mut cnt = 0;
             for local in &self.locals {
                 if ty == *local {
                     cnt += 1;
                 } else {
-                    buf.write_u32(cnt)?;
-                    ty.write_into(&mut buf)?;
+                    locals.push(SynthLocal { n: cnt, t: ty });
                     ty = *local;
                     cnt = 1;
                 }
             }
-            buf.write_u32(cnt)?;
-            ty.write_into(&mut buf)?;
+            locals.push(SynthLocal { n: cnt, t: ty });
         }
 
-        log::trace!("code size to write: {}", buf.len());
+        buf.write_vector(&locals, SynthLocal::write_into)?;
         self.func_expr.write_into(&mut buf)?;
+        log::trace!("code size to write: {}", buf.len());
 
         wr.write_u32(
             buf.len()
@@ -60,6 +60,20 @@ impl SynthCode {
         )?;
         wr.write_all(&buf)?;
 
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SynthLocal {
+    n: u32,
+    t: ValueType,
+}
+
+impl SynthLocal {
+    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
+        wr.write_u32(self.n)?;
+        self.t.write_into(wr)?;
         Ok(())
     }
 }

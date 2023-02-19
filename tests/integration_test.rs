@@ -79,6 +79,7 @@ fn data_section(section: &DataSection) -> Result<(), Error> {
 
 fn test_sections(module: &Module) {
     for section in module.sections() {
+        log::trace!("test_sections: section ID {}", section.id());
         match section {
             Section::Custom(_) => (),
             Section::Type(s) => type_section(s).expect("cannot parse type section"),
@@ -98,6 +99,7 @@ fn test_sections(module: &Module) {
 }
 
 fn test_synth(module: &Module) {
+    log::trace!("test_synth");
     let mut buf = Vec::new();
     module
         .clone()
@@ -106,8 +108,10 @@ fn test_synth(module: &Module) {
         .write_into(&mut buf)
         .expect("write_into fail");
 
+    log::trace!("self-validation");
     let module2 = Module::from_binary(&buf).expect("self-validation fail");
     test_sections(&module2);
+    log::trace!("self-validation end");
     wasmparser::validate(&buf).expect("wasmparser validation fail");
 }
 

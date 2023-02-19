@@ -50,6 +50,7 @@ impl SynthCode {
             ty.write_into(&mut buf)?;
         }
 
+        log::trace!("code size to write: {}", buf.len());
         self.func_expr.write_into(&mut buf)?;
 
         wr.write_u32(

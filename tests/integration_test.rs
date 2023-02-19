@@ -1,3 +1,5 @@
+use std::sync::Once;
+
 use wasynth::{
     parse::{
         sections::{
@@ -8,6 +10,11 @@ use wasynth::{
     },
     Error,
 };
+
+fn init_logger() {
+    static ONCE: Once = Once::new();
+    ONCE.call_once(env_logger::init);
+}
 
 fn parse_wat(wat_s: &str) -> Module {
     let wasm = wat::parse_str(wat_s).expect("cannot parse wat");

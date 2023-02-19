@@ -54,6 +54,7 @@ fn generate_tests_inner() -> anyhow::Result<TokenStream> {
                     quote! {
                         #[test]
                         fn #fn_name() {
+                            init_logger();
                             let contents = std::fs::read(#path_lit).expect("cannot read wat file");
                             let contents = String::from_utf8(contents).expect("cannot read wat file as an UTF-8 string");
                             let module = parse_wat(&contents);
@@ -67,6 +68,7 @@ fn generate_tests_inner() -> anyhow::Result<TokenStream> {
                     quote! {
                         #[test]
                         fn #fn_name() {
+                            init_logger();
                             let contents = std::fs::read(#path_lit).expect("cannot read wat file");
                             let module = parse_wasm(&contents);
                             test_sections(&module);

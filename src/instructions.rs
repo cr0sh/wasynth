@@ -1365,9 +1365,9 @@ impl Instruction {
         }
     }
 
-    pub(crate) fn from_bytes_vec<'a, 'bytes>(
+    pub(crate) fn from_bytes_vec<'bytes>(
         mut bytes: &'bytes [u8],
-        endset: &'a [u8],
+        endset: &[u8],
     ) -> Result<(Vec<Self>, u8, &'bytes [u8]), Error> {
         let mut ret = Vec::new();
         loop {

@@ -95,7 +95,6 @@ impl<'a> Bytes for &'a [u8] {
     type NameRef = &'a str;
 
     fn advance<const N: usize>(self) -> Result<(Self::ArrayRef<N>, Self), Error> {
-        trace!("advance<{N}>");
         if self.len() < N {
             Err(Error::UnexpectedEof(N, self.len()))
         } else {
@@ -106,7 +105,6 @@ impl<'a> Bytes for &'a [u8] {
     }
 
     fn advance_slice(self, len: usize) -> Result<(Self, Self), Error> {
-        trace!("advance_slice({len})");
         if self.len() < len {
             Err(Error::UnexpectedEof(len, self.len()))
         } else {
@@ -116,7 +114,6 @@ impl<'a> Bytes for &'a [u8] {
     }
 
     fn advance_u32(self) -> Result<(u32, Self), Error> {
-        trace!("advance_u32");
         let advance_len = self.len().min(5);
         let mut head = &self[0..advance_len];
         let x = leb128::read::unsigned(&mut head).map_err(Error::ReadLeb128)?;
@@ -130,7 +127,6 @@ impl<'a> Bytes for &'a [u8] {
     }
 
     fn advance_u64(self) -> Result<(u64, Self), Error> {
-        trace!("advance_u64");
         let advance_len = self.len().min(10);
         let mut head = &self[0..advance_len];
         let x = leb128::read::unsigned(&mut head).map_err(Error::ReadLeb128)?;
@@ -140,7 +136,6 @@ impl<'a> Bytes for &'a [u8] {
     }
 
     fn advance_s32(self) -> Result<(i32, Self), Error> {
-        trace!("advance_s32");
         let advance_len = self.len().min(5);
         let mut head = &self[0..advance_len];
         let x = leb128::read::signed(&mut head).map_err(Error::ReadLeb128)?;
@@ -154,7 +149,6 @@ impl<'a> Bytes for &'a [u8] {
     }
 
     fn advance_s64(self) -> Result<(i64, Self), Error> {
-        trace!("advance_s64");
         let advance_len = self.len().min(10);
         let mut head = &self[0..advance_len];
         let x = leb128::read::signed(&mut head).map_err(Error::ReadLeb128)?;
@@ -164,13 +158,11 @@ impl<'a> Bytes for &'a [u8] {
     }
 
     fn advance_f32(self) -> Result<(f32, Self), Error> {
-        trace!("advance_f32");
         let (f, this) = self.advance()?;
         Ok((f32::from_le_bytes(*f), this))
     }
 
     fn advance_f64(self) -> Result<(f64, Self), Error> {
-        trace!("advance_f64");
         let (f, this) = self.advance()?;
         Ok((f64::from_le_bytes(*f), this))
     }
@@ -179,7 +171,6 @@ impl<'a> Bytes for &'a [u8] {
         self,
         func: F,
     ) -> Result<Self::VectorIterator<T, F>, Error> {
-        trace!("advance_vector (enter)");
         let (n, this) = self.advance_u32()?;
         trace!("vector elements = {n}");
 
@@ -224,7 +215,6 @@ where
                 Err(e) => Some(Err(e)),
             }
         } else {
-            trace!("advance_vector (iterator end)");
             None
         }
     }

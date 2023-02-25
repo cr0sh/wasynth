@@ -15,6 +15,7 @@ env_logger = "0.10.0"
 quickcheck = "1.0.3"
 tests-gen = { path = "tests-gen" }
 wasmparser = "0.101.0"
+wasmprinter = "0.2.52"
 wat = "1.0.56"
 
 [workspace]

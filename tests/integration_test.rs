@@ -112,6 +112,10 @@ fn test_synth(module: &Module) {
     let module2 = Module::from_binary(&buf).expect("self-validation fail");
     test_sections(&module2);
     log::trace!("self-validation end");
+    log::trace!(
+        "wat: {}",
+        wasmprinter::print_bytes(&buf).expect("cannot parse synthesized wasm module")
+    );
     wasmparser::validate(&buf).expect("wasmparser validation fail");
 }
 

@@ -41,10 +41,20 @@ impl SynthData {
             } if *memory_index == 0 => {
                 wr.write_u32(0)?;
                 offset.write_into(wr)?;
+                wr.write_u32(
+                    init.len()
+                        .try_into()
+                        .expect("data section init length overflow"),
+                )?;
                 wr.write_all(init)?;
             }
             SynthData::Passive(init) => {
                 wr.write_u32(1)?;
+                wr.write_u32(
+                    init.len()
+                        .try_into()
+                        .expect("data section init length overflow"),
+                )?;
                 wr.write_all(init)?;
             }
             SynthData::Active {
@@ -55,6 +65,11 @@ impl SynthData {
                 wr.write_u32(2)?;
                 wr.write_u32(*memory_index)?;
                 offset.write_into(wr)?;
+                wr.write_u32(
+                    init.len()
+                        .try_into()
+                        .expect("data section init length overflow"),
+                )?;
                 wr.write_all(init)?;
             }
         }

@@ -3,13 +3,18 @@ pub mod parse;
 pub mod synth;
 pub mod wasm_types;
 
+#[cfg(bytes_trace)]
+pub mod bytes_trace;
+
 use std::{
     io::{self, Write},
     marker::PhantomData,
 };
 
-use log::trace;
 use thiserror::Error;
+
+#[cfg(bytes_trace)]
+use bytes_trace::{trace_end, trace_start, Action};
 
 pub const WASM_MAGIC: &[u8] = &[0x00, 0x61, 0x73, 0x6d];
 pub const WASM_VERSION: u32 = 1;
@@ -99,6 +104,11 @@ impl<'a> Bytes for &'a [u8] {
             Err(Error::UnexpectedEof(N, self.len()))
         } else {
             let (x, y) = self.split_at(N);
+            #[cfg(bytes_trace)]
+            {
+                trace_start(Action::Advance, x);
+                trace_end(Action::Advance, y);
+            }
             // SAFETY: x points to [T; N]? Yes it's [T] of length N (checked by split_at)
             Ok((unsafe { &*(x.as_ptr() as *const [u8; N]) }, y))
         }
@@ -109,11 +119,19 @@ impl<'a> Bytes for &'a [u8] {
             Err(Error::UnexpectedEof(len, self.len()))
         } else {
             let (x, y) = self.split_at(len);
+            #[cfg(bytes_trace)]
+            {
+                trace_start(Action::AdvanceSlice, x);
+                trace_end(Action::AdvanceSlice, y);
+            }
             Ok((x, y))
         }
     }
 
     fn advance_u32(self) -> Result<(u32, Self), Error> {
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceU32, self);
+
         let advance_len = self.len().min(5);
         let mut head = &self[0..advance_len];
         let x = leb128::read::unsigned(&mut head).map_err(Error::ReadLeb128)?;
@@ -123,19 +141,33 @@ impl<'a> Bytes for &'a [u8] {
         }
 
         let (_, this) = self.advance_slice(advance_len - head.len()).unwrap();
+
+        #[cfg(bytes_trace)]
+        trace_end(Action::AdvanceU32, this);
+
         Ok((x as u32, this))
     }
 
     fn advance_u64(self) -> Result<(u64, Self), Error> {
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceU64, self);
+
         let advance_len = self.len().min(10);
         let mut head = &self[0..advance_len];
         let x = leb128::read::unsigned(&mut head).map_err(Error::ReadLeb128)?;
 
         let (_, this) = self.advance_slice(advance_len - head.len()).unwrap();
+
+        #[cfg(bytes_trace)]
+        trace_end(Action::AdvanceU64, this);
+
         Ok((x, this))
     }
 
     fn advance_s32(self) -> Result<(i32, Self), Error> {
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceS32, self);
+
         let advance_len = self.len().min(5);
         let mut head = &self[0..advance_len];
         let x = leb128::read::signed(&mut head).map_err(Error::ReadLeb128)?;
@@ -145,25 +177,48 @@ impl<'a> Bytes for &'a [u8] {
         }
 
         let (_, this) = self.advance_slice(advance_len - head.len()).unwrap();
+
+        #[cfg(bytes_trace)]
+        trace_end(Action::AdvanceS32, this);
         Ok((x as i32, this))
     }
 
     fn advance_s64(self) -> Result<(i64, Self), Error> {
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceS64, self);
+
         let advance_len = self.len().min(10);
         let mut head = &self[0..advance_len];
         let x = leb128::read::signed(&mut head).map_err(Error::ReadLeb128)?;
 
         let (_, this) = self.advance_slice(advance_len - head.len()).unwrap();
+
+        #[cfg(bytes_trace)]
+        trace_end(Action::AdvanceS64, this);
         Ok((x, this))
     }
 
     fn advance_f32(self) -> Result<(f32, Self), Error> {
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceF32, self);
+
         let (f, this) = self.advance()?;
+
+        #[cfg(bytes_trace)]
+        trace_end(Action::AdvanceF32, this);
+
         Ok((f32::from_le_bytes(*f), this))
     }
 
     fn advance_f64(self) -> Result<(f64, Self), Error> {
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceU32, self);
+
         let (f, this) = self.advance()?;
+
+        #[cfg(bytes_trace)]
+        trace_end(Action::AdvanceF64, this);
+
         Ok((f64::from_le_bytes(*f), this))
     }
 
@@ -171,8 +226,10 @@ impl<'a> Bytes for &'a [u8] {
         self,
         func: F,
     ) -> Result<Self::VectorIterator<T, F>, Error> {
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceVector, self);
+
         let (n, this) = self.advance_u32()?;
-        trace!("vector elements = {n}");
 
         Ok(VectorIterator {
             bytes: this,
@@ -183,9 +240,15 @@ impl<'a> Bytes for &'a [u8] {
     }
 
     fn advance_name(self) -> Result<(Self::NameRef, Self), Error> {
-        trace!("advance_name");
+        #[cfg(bytes_trace)]
+        trace_start(Action::AdvanceName, self);
+
         let (&[n], this) = self.advance()?;
         let (bytes, this) = this.advance_slice(n as usize)?;
+
+        #[cfg(bytes_trace)]
+        trace_end(Action::AdvanceName, this);
+
         Ok((std::str::from_utf8(bytes).map_err(Error::ParseName)?, this))
     }
 }
@@ -215,6 +278,8 @@ where
                 Err(e) => Some(Err(e)),
             }
         } else {
+            #[cfg(bytes_trace)]
+            trace_end(Action::AdvanceVector, self.bytes);
             None
         }
     }

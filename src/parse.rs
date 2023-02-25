@@ -25,6 +25,11 @@ pub struct Module<'bytes> {
 
 impl<'bytes> Module<'bytes> {
     pub fn from_binary(binary: &'bytes [u8]) -> Result<Self, Error> {
+        #[cfg(bytes_trace)]
+        {
+            crate::bytes_trace::initialize(binary);
+        }
+
         let (magic, binary) = binary.advance::<4>()?;
         if magic != WASM_MAGIC {
             return Err(Error::Magic(magic[0], magic[1], magic[2], magic[3]));

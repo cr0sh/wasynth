@@ -1394,23 +1394,19 @@ impl Instruction {
             Instruction::Block(bt, instrs) => {
                 wr.write_all(&[0x02])?;
                 bt.write_into(wr)?;
-                Self::write_slice_into(instrs, wr)?;
-                wr.write_all(&[0x0B])?;
+                Self::write_slice_into(instrs, 0x0B, wr)?;
             }
             Instruction::Loop(_bt, instrs) => {
                 wr.write_all(&[0x03])?;
-                Self::write_slice_into(instrs, wr)?;
-                wr.write_all(&[0x0B])?;
+                Self::write_slice_into(instrs, 0x0B, wr)?;
             }
             Instruction::If(_bt, instrs, elseinstrs) => {
                 wr.write_all(&[0x04])?;
-                Self::write_slice_into(instrs, wr)?;
                 if let Some(elseinstrs) = elseinstrs {
-                    wr.write_all(&[0x05])?;
-                    Self::write_slice_into(elseinstrs, wr)?;
-                    wr.write_all(&[0x0B])?;
+                    Self::write_slice_into(instrs, 0x05, wr)?;
+                    Self::write_slice_into(elseinstrs, 0x0B, wr)?;
                 } else {
-                    wr.write_all(&[0x0B])?;
+                    Self::write_slice_into(instrs, 0x0B, wr)?;
                 }
             }
             Instruction::Br(li) => {
@@ -3064,10 +3060,15 @@ impl Instruction {
         Ok(())
     }
 
-    pub(crate) fn write_slice_into(this: &[Self], wr: &mut impl Write) -> Result<(), io::Error> {
+    pub(crate) fn write_slice_into(
+        this: &[Self],
+        terminator: u8,
+        wr: &mut impl Write,
+    ) -> Result<(), io::Error> {
         for x in this {
             x.write_into(wr)?;
         }
+        wr.write_all(&[terminator])?;
         Ok(())
     }
 }
@@ -3084,7 +3085,7 @@ impl Expression {
     }
 
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
-        Instruction::write_slice_into(&self.0, wr)
+        Instruction::write_slice_into(&self.0, 0x0B, wr)
     }
 
     pub fn instructions(&self) -> &[Instruction] {

@@ -44,7 +44,7 @@ impl SynthData {
                 wr.write_all(init)?;
             }
             SynthData::Passive(init) => {
-                wr.write_u32(0)?;
+                wr.write_u32(1)?;
                 wr.write_all(init)?;
             }
             SynthData::Active {
@@ -52,7 +52,7 @@ impl SynthData {
                 memory_index,
                 offset,
             } => {
-                wr.write_u32(0)?;
+                wr.write_u32(2)?;
                 wr.write_u32(*memory_index)?;
                 offset.write_into(wr)?;
                 wr.write_all(init)?;

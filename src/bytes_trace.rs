@@ -89,6 +89,6 @@ pub fn trace_end(action: Action, bytes: &[u8]) {
             eprint!(" {b:02X}");
         }
 
-        eprintln!();
+        eprintln!(" (offset {start})");
     })
 }

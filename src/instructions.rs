@@ -1396,12 +1396,14 @@ impl Instruction {
                 bt.write_into(wr)?;
                 Self::write_slice_into(instrs, 0x0B, wr)?;
             }
-            Instruction::Loop(_bt, instrs) => {
+            Instruction::Loop(bt, instrs) => {
                 wr.write_all(&[0x03])?;
+                bt.write_into(wr)?;
                 Self::write_slice_into(instrs, 0x0B, wr)?;
             }
-            Instruction::If(_bt, instrs, elseinstrs) => {
+            Instruction::If(bt, instrs, elseinstrs) => {
                 wr.write_all(&[0x04])?;
+                bt.write_into(wr)?;
                 if let Some(elseinstrs) = elseinstrs {
                     Self::write_slice_into(instrs, 0x05, wr)?;
                     Self::write_slice_into(elseinstrs, 0x0B, wr)?;

@@ -1,0 +1,41 @@
+[package]
+name = "wasynth-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+wasm-smith = "0.12.4"
+wasmparser = "0.101.1"
+
+[dependencies.wasynth]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "fuzz_target_1"
+path = "fuzz_targets/fuzz_target_1.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "wasm_smith_parse"
+path = "fuzz_targets/wasm_smith_parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "wasm_smith_synth"
+path = "fuzz_targets/wasm_smith_synth.rs"
+test = false
+doc = false

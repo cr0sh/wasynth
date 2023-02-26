@@ -1419,9 +1419,10 @@ impl Instruction {
                 wr.write_all(&[0x0D])?;
                 wr.write_u32(*li)?;
             }
-            Instruction::BrTable(lis, _ln) => {
+            Instruction::BrTable(lis, ln) => {
                 wr.write_all(&[0x0E])?;
                 wr.write_vector(lis, |x, wr| wr.write_u32(*x))?;
+                wr.write_u32(*ln)?;
             }
             Instruction::Return => {
                 wr.write_all(&[0x0F])?;

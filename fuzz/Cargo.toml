@@ -14,6 +14,7 @@ wasmparser = "0.101.1"
 
 [dependencies.wasynth]
 path = ".."
+features = ["bytes-trace"]
 
 # Prevent this from interfering with workspaces
 [workspace]

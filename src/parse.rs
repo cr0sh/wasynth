@@ -25,7 +25,7 @@ pub struct Module<'bytes> {
 
 impl<'bytes> Module<'bytes> {
     pub fn from_binary(binary: &'bytes [u8]) -> Result<Self, Error> {
-        #[cfg(bytes_trace)]
+        #[cfg(feature = "bytes_trace")]
         {
             crate::bytes_trace::initialize(binary);
         }

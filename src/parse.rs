@@ -44,7 +44,7 @@ impl<'bytes> Module<'bytes> {
         let mut sections = Vec::new();
 
         while !binary.is_empty() {
-            trace!("start reading section");
+            trace!("start reading section, id={}", binary[0]);
             let (section, rest) = Section::from_bytes(binary)?;
             trace!("end reading section, id={}", section.id());
             binary = rest;
@@ -73,7 +73,9 @@ impl<'bytes> Module<'bytes> {
     }
 
     pub fn validate(&self) -> Result<(), Error> {
+        trace!("validation start");
         for section in self.sections() {
+            trace!("section id={}", section.id());
             match section {
                 Section::Custom(_) => (),
                 Section::Type(s) => {
@@ -118,6 +120,7 @@ impl<'bytes> Module<'bytes> {
                 Section::DataCount(_) => (),
             }
         }
+        trace!("validation end");
         Ok(())
     }
 }

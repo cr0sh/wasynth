@@ -141,8 +141,8 @@ pub enum Instruction {
     MemoryFill,
 
     // Numeric instructions
-    I32Const(u32),
-    I64Const(u64),
+    I32Const(i32),
+    I64Const(i64),
     F32Const(f32),
     F64Const(f64),
 
@@ -766,11 +766,11 @@ impl Instruction {
                 Ok((Self::MemoryGrow, bytes))
             }
             0x41 => {
-                let (n, bytes) = bytes.advance_u32()?;
+                let (n, bytes) = bytes.advance_s32()?;
                 Ok((Self::I32Const(n), bytes))
             }
             0x42 => {
-                let (n, bytes) = bytes.advance_u64()?;
+                let (n, bytes) = bytes.advance_s64()?;
                 Ok((Self::I64Const(n), bytes))
             }
             0x43 => {
@@ -1636,11 +1636,11 @@ impl Instruction {
             }
             Instruction::I32Const(n) => {
                 wr.write_all(&[0x41])?;
-                wr.write_u32(*n)?;
+                wr.write_s32(*n)?;
             }
             Instruction::I64Const(n) => {
                 wr.write_all(&[0x42])?;
-                wr.write_u64(*n)?;
+                wr.write_s64(*n)?;
             }
             Instruction::F32Const(z) => {
                 wr.write_all(&[0x43])?;

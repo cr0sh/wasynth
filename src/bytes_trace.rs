@@ -1,4 +1,6 @@
-use std::{cell::RefCell, fmt::Display};
+use std::{cell::RefCell, fmt::Display, fmt::Write};
+
+use log::trace;
 
 struct Context {
     stack: Vec<(*const u8, Action)>,
@@ -43,11 +45,12 @@ thread_local! {
 }
 
 pub fn initialize(bytes: &[u8]) {
-    eprint!("payload:");
+    let mut buf = String::new();
+    write!(&mut buf, "payload:").unwrap();
     for b in bytes {
-        eprint!(" {b:02X}");
+        write!(&mut buf, " {b:02X}").unwrap();
     }
-    eprintln!();
+    trace!("{buf}");
 
     let mut payload = Vec::new();
     payload.extend_from_slice(bytes);
@@ -79,16 +82,18 @@ pub fn trace_end(action: Action, bytes: &[u8]) {
             "popped action does not equal to the expected action"
         );
 
+        let mut buf = String::new();
         for (_, action) in &ctx.stack {
-            eprint!("{action} > ");
+            write!(&mut buf, "{action} > ").unwrap();
         }
-        eprint!("{action} >");
+        write!(&mut buf, "{action} >").unwrap();
         let start = start_ptr as usize - ctx.base_ptr as usize;
         let end = bytes.as_ptr() as usize - ctx.base_ptr as usize;
         for b in &ctx.payload[start..end] {
-            eprint!(" {b:02X}");
+            write!(&mut buf, " {b:02X}").unwrap();
         }
 
-        eprintln!(" (offset {start})");
+        write!(&mut buf, " (offset {start})").unwrap();
+        trace!("{buf}");
     })
 }

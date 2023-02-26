@@ -81,17 +81,17 @@ impl SynthImportDescription {
                 Ok(())
             }
             SynthImportDescription::Table(x) => {
-                wr.write_all(&[0x00])?;
+                wr.write_all(&[0x01])?;
                 x.write_into(wr)?;
                 Ok(())
             }
             SynthImportDescription::Memory(x) => {
-                wr.write_all(&[0x00])?;
+                wr.write_all(&[0x02])?;
                 x.write_into(wr)?;
                 Ok(())
             }
             SynthImportDescription::Global(x) => {
-                wr.write_all(&[0x00])?;
+                wr.write_all(&[0x03])?;
                 x.write_into(wr)?;
                 Ok(())
             }

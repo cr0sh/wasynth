@@ -71,6 +71,55 @@ impl<'bytes> Module<'bytes> {
     pub fn sections(&self) -> &[Section<'bytes>] {
         &self.sections
     }
+
+    pub fn validate(&self) -> Result<(), Error> {
+        for section in self.sections() {
+            match section {
+                Section::Custom(_) => (),
+                Section::Type(s) => {
+                    for ty in s.types()? {
+                        ty?;
+                    }
+                }
+                Section::Import(s) => {
+                    for im in s.imports()? {
+                        im?;
+                    }
+                }
+                Section::Function(s) => {
+                    for tyidx in s.type_indices()? {
+                        tyidx?;
+                    }
+                }
+                Section::Table(s) => {
+                    for table in s.tables()? {
+                        table?;
+                    }
+                }
+                Section::Memory(s) => {
+                    for mem in s.memories()? {
+                        mem?;
+                    }
+                }
+                Section::Global(_) => (),
+                Section::Export(_) => (),
+                Section::Start(_) => (),
+                Section::Element(_) => (),
+                Section::Code(s) => {
+                    for code in s.codes()? {
+                        code?;
+                    }
+                }
+                Section::Data(s) => {
+                    for data in s.all_data()? {
+                        data?;
+                    }
+                }
+                Section::DataCount(_) => (),
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Copy, Debug)]

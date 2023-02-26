@@ -243,8 +243,8 @@ impl<'a> Bytes for &'a [u8] {
         #[cfg(feature = "bytes_trace")]
         trace_start(Action::AdvanceName, self);
 
-        let (&[n], this) = self.advance()?;
-        let (bytes, this) = this.advance_slice(n as usize)?;
+        let (n, this) = self.advance_u32()?;
+        let (bytes, this) = this.advance_slice(n.try_into().expect("name length overflow"))?;
 
         #[cfg(feature = "bytes_trace")]
         trace_end(Action::AdvanceName, this);

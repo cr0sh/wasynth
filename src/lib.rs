@@ -212,7 +212,7 @@ impl<'a> Bytes for &'a [u8] {
 
     fn advance_f64(self) -> Result<(f64, Self), Error> {
         #[cfg(bytes_trace)]
-        trace_start(Action::AdvanceU32, self);
+        trace_start(Action::AdvanceF64, self);
 
         let (f, this) = self.advance()?;
 

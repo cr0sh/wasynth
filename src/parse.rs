@@ -169,6 +169,7 @@ impl<'bytes> Section<'bytes> {
     }
 
     pub fn into_synth(self) -> Result<SynthSection, Error> {
+        trace!("into_synth section id {}", self.id());
         match self {
             Section::Custom(x) => Ok(SynthSection::Custom(x.into_synth())),
             Section::Type(x) => Ok(SynthSection::Type(x.into_synth()?)),

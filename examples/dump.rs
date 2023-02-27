@@ -1,8 +1,8 @@
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     env_logger::init();
 
-    let wasm = wat::parse_str(include_str!("../tests/cases/fib_log.wat"))?;
-    let module = wasynth::parse::Module::from_binary(&wasm)?;
+    let wasm = include_bytes!("../target/wasm32-unknown-unknown/debug/wasynth.wasm");
+    let module = wasynth::parse::Module::from_binary(wasm)?;
 
     for section in module.sections() {
         match section {

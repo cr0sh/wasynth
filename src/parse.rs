@@ -74,7 +74,7 @@ impl<'bytes> Module<'bytes> {
         }
 
         Ok(SynthModule {
-            type_seciton: self
+            type_section: self
                 .sections
                 .iter()
                 .filter_map(|x| match x {

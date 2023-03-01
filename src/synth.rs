@@ -16,7 +16,7 @@ pub mod sections;
 
 /// A WebAssembly module synthesizer.
 pub struct SynthModule {
-    pub(crate) type_seciton: Option<SynthTypeSection>,
+    pub(crate) type_section: Option<SynthTypeSection>,
     pub(crate) import_section: Option<SynthImportSection>,
     pub(crate) function_section: Option<SynthFunctionSection>,
     pub(crate) table_section: Option<SynthTableSection>,
@@ -36,7 +36,7 @@ impl SynthModule {
         wr.write_all(WASM_MAGIC)?;
         wr.write_all(&WASM_VERSION.to_le_bytes())?;
 
-        if let Some(sec) = &self.type_seciton {
+        if let Some(sec) = &self.type_section {
             sec.write_into(wr)?;
         }
         if let Some(sec) = &self.import_section {

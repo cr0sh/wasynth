@@ -159,7 +159,8 @@ impl<'bytes> Module<'bytes> {
                     _ => None,
                 })
                 .extract_element("element")?
-                .map(|x| x.into_synth()),
+                .map(|x| x.into_synth())
+                .transpose()?,
             code_section: self
                 .sections
                 .iter()

@@ -59,6 +59,8 @@ pub enum Error {
     Opcode(u8),
     #[error("invalid data section tag {0}")]
     DataSectionTag(u32),
+    #[error("invalid elemkind discriminator {0}")]
+    ElemKind(u8),
     // TODO: separate error type among parse/synth/instrument codes
     #[error("I/O error")]
     Io(#[source] io::Error),

@@ -114,7 +114,7 @@ impl Display for ValueType {
 ///
 /// <https://webassembly.github.io/spec/core/binary/types.html#result-types>
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ResultType(Vec<ValueType>);
+pub struct ResultType(pub Vec<ValueType>);
 
 impl ResultType {
     pub(crate) fn from_bytes(bytes: &[u8]) -> Result<(Self, &[u8]), Error> {

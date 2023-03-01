@@ -269,7 +269,7 @@ pub enum Section<'bytes> {
     Memory(MemorySection<'bytes>),
     Global(GlobalSection<'bytes>),
     Export(ExportSection<'bytes>),
-    Start(StartSection<'bytes>),
+    Start(StartSection),
     Element(ElementSection<'bytes>),
     Code(CodeSection<'bytes>),
     Data(DataSection<'bytes>),

@@ -26,8 +26,14 @@ impl SynthCustomSection {
     }
 
     pub(crate) fn write_into(&self, mut wr: impl Write) -> Result<(), io::Error> {
-        wr.write_name(&self.name)?;
-        wr.write_all(&self.bytes)?;
+        let mut buf = Vec::new();
+        buf.write_name(&self.name)?;
+        buf.write_all(&self.bytes)?;
+
+        wr.write_all(&[0])?;
+        wr.write_u32(buf.len().try_into().expect("buffer length overflow"))?;
+        wr.write_all(&buf)?;
+
         Ok(())
     }
 }

@@ -17,6 +17,13 @@ impl SynthFunctionSection {
     }
 
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
-        wr.write_vector(&self.type_indices, |x, wr| wr.write_u32(*x))
+        let mut buf = Vec::new();
+        buf.write_vector(&self.type_indices, |x, wr| wr.write_u32(*x))?;
+
+        wr.write_all(&[3])?;
+        wr.write_u32(buf.len().try_into().expect("buffer length overflow"))?;
+        wr.write_all(&buf)?;
+
+        Ok(())
     }
 }

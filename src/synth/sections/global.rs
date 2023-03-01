@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 
+use crate::WriteExt;
+
 #[derive(Clone, Debug)]
 pub struct SynthGlobalSection {
     pub(crate) bytes: Vec<u8>,
@@ -7,6 +9,13 @@ pub struct SynthGlobalSection {
 
 impl SynthGlobalSection {
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
-        wr.write_all(&self.bytes)
+        let mut buf = Vec::new();
+        buf.write_all(&self.bytes)?;
+
+        wr.write_all(&[6])?;
+        wr.write_u32(buf.len().try_into().expect("buffer length overflow"))?;
+        wr.write_all(&buf)?;
+
+        Ok(())
     }
 }

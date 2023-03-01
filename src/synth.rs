@@ -4,7 +4,7 @@
 
 use std::io::{self, Write};
 
-use crate::{WriteExt, WASM_MAGIC, WASM_VERSION};
+use crate::{WASM_MAGIC, WASM_VERSION};
 
 use self::sections::{
     SynthCodeSection, SynthCustomSection, SynthDataCountSection, SynthDataSection,
@@ -16,82 +16,67 @@ pub mod sections;
 
 /// A WebAssembly module synthesizer.
 pub struct SynthModule {
-    pub(crate) sections: Vec<SynthSection>,
+    pub(crate) type_seciton: Option<SynthTypeSection>,
+    pub(crate) import_section: Option<SynthImportSection>,
+    pub(crate) function_section: Option<SynthFunctionSection>,
+    pub(crate) table_section: Option<SynthTableSection>,
+    pub(crate) memory_section: Option<SynthMemorySection>,
+    pub(crate) global_section: Option<SynthGlobalSection>,
+    pub(crate) export_section: Option<SynthExportSection>,
+    pub(crate) start_section: Option<SynthStartSection>,
+    pub(crate) element_section: Option<SynthElementSection>,
+    pub(crate) code_section: Option<SynthCodeSection>,
+    pub(crate) data_section: Option<SynthDataSection>,
+    pub(crate) data_count_section: Option<SynthDataCountSection>,
+    pub(crate) custom_sections: Vec<SynthCustomSection>,
 }
 
 impl SynthModule {
-    pub fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
+    pub fn write_into(&self, mut wr: &mut impl Write) -> Result<(), io::Error> {
         wr.write_all(WASM_MAGIC)?;
         wr.write_all(&WASM_VERSION.to_le_bytes())?;
 
-        for section in &self.sections {
-            section.write_into(wr)?;
+        if let Some(sec) = &self.type_seciton {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.import_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.function_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.table_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.memory_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.global_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.export_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.start_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.element_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.code_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.data_section {
+            sec.write_into(wr)?;
+        }
+        if let Some(sec) = &self.data_count_section {
+            sec.write_into(wr)?;
+        }
+
+        for section in &self.custom_sections {
+            section.write_into(&mut wr)?;
         }
 
         Ok(())
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum SynthSection {
-    Custom(SynthCustomSection),
-    Type(SynthTypeSection),
-    Import(SynthImportSection),
-    Function(SynthFunctionSection),
-    Table(SynthTableSection),
-    Memory(SynthMemorySection),
-    Global(SynthGlobalSection),
-    Export(SynthExportSection),
-    Start(SynthStartSection),
-    Element(SynthElementSection),
-    Code(SynthCodeSection),
-    Data(SynthDataSection),
-    DataCount(SynthDataCountSection),
-}
-
-impl SynthSection {
-    pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
-        wr.write_all(&[self.id()])?;
-
-        let mut buf = Vec::new();
-        match self {
-            SynthSection::Custom(x) => x.write_into(&mut buf)?,
-            SynthSection::Type(x) => x.write_into(&mut buf)?,
-            SynthSection::Import(x) => x.write_into(&mut buf)?,
-            SynthSection::Function(x) => x.write_into(&mut buf)?,
-            SynthSection::Table(x) => x.write_into(&mut buf)?,
-            SynthSection::Memory(x) => x.write_into(&mut buf)?,
-            SynthSection::Global(x) => x.write_into(&mut buf)?,
-            SynthSection::Export(x) => x.write_into(&mut buf)?,
-            SynthSection::Start(x) => x.write_into(&mut buf)?,
-            SynthSection::Element(x) => x.write_into(&mut buf)?,
-            SynthSection::Code(x) => x.write_into(&mut buf)?,
-            SynthSection::Data(x) => x.write_into(&mut buf)?,
-            SynthSection::DataCount(x) => x.write_into(&mut buf)?,
-        };
-
-        wr.write_u32(buf.len().try_into().expect("buffer length overflow"))?;
-        wr.write_all(&buf)?;
-
-        Ok(())
-    }
-
-    /// Returns the ID of the section.
-    pub fn id(&self) -> u8 {
-        match self {
-            Self::Custom(..) => 0,
-            Self::Type(..) => 1,
-            Self::Import(..) => 2,
-            Self::Function(..) => 3,
-            Self::Table(..) => 4,
-            Self::Memory(..) => 5,
-            Self::Global(..) => 6,
-            Self::Export(..) => 7,
-            Self::Start(..) => 8,
-            Self::Element(..) => 9,
-            Self::Code(..) => 10,
-            Self::Data(..) => 11,
-            Self::DataCount(..) => 12,
-        }
     }
 }

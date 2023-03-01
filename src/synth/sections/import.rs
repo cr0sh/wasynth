@@ -20,7 +20,14 @@ impl SynthImportSection {
     }
 
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
-        wr.write_vector(&self.imports, SynthImport::write_into)
+        let mut buf = Vec::new();
+        buf.write_vector(&self.imports, SynthImport::write_into)?;
+
+        wr.write_all(&[2])?;
+        wr.write_u32(buf.len().try_into().expect("buffer length overflow"))?;
+        wr.write_all(&buf)?;
+
+        Ok(())
     }
 }
 

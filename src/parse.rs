@@ -6,10 +6,7 @@ pub mod sections;
 
 use std::fmt::Debug;
 
-use crate::{
-    synth::{SynthModule, SynthSection},
-    Bytes, Error, WASM_MAGIC, WASM_VERSION,
-};
+use crate::{synth::SynthModule, Bytes, Error, WASM_MAGIC, WASM_VERSION};
 use log::trace;
 use sections::{
     CodeSection, CustomSection, DataCountSection, DataSection, ElementSection, ExportSection,
@@ -59,12 +56,148 @@ impl<'bytes> Module<'bytes> {
     }
 
     pub fn into_synth(self) -> Result<SynthModule, Error> {
+        trait IteratorExt: Iterator {
+            fn extract_element(
+                self,
+                section_name: &'static str,
+            ) -> Result<Option<Self::Item>, Error>;
+        }
+
+        impl<T, I: Iterator<Item = T>> IteratorExt for I {
+            fn extract_element(mut self, section_name: &'static str) -> Result<Option<T>, Error> {
+                let first = self.next();
+                if self.next().is_some() {
+                    return Err(Error::DuplicateSection(section_name));
+                }
+                Ok(first)
+            }
+        }
+
         Ok(SynthModule {
-            sections: self
+            type_seciton: self
                 .sections
-                .into_iter()
-                .map(Section::into_synth)
-                .collect::<Result<Vec<_>, Error>>()?,
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Type(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("type")?
+                .map(|x| x.into_synth())
+                .transpose()?,
+            import_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Import(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("import")?
+                .map(|x| x.into_synth())
+                .transpose()?,
+            function_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Function(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("function")?
+                .map(|x| x.into_synth())
+                .transpose()?,
+            table_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Table(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("table")?
+                .map(|x| x.into_synth())
+                .transpose()?,
+            memory_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Memory(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("memory")?
+                .map(|x| x.into_synth())
+                .transpose()?,
+            global_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Global(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("global")?
+                .map(|x| x.into_synth()),
+            export_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Export(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("export")?
+                .map(|x| x.into_synth()),
+            start_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Start(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("start")?
+                .map(|x| x.into_synth()),
+            element_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Element(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("element")?
+                .map(|x| x.into_synth()),
+            code_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Code(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("code")?
+                .map(|x| x.into_synth())
+                .transpose()?,
+            data_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Data(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("data")?
+                .map(|x| x.into_synth())
+                .transpose()?,
+            data_count_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::DataCount(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("data count")?
+                .map(|x| x.into_synth()),
+            custom_sections: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Custom(x) => Some(*x),
+                    _ => None,
+                })
+                .map(CustomSection::into_synth)
+                .collect(),
         })
     }
 
@@ -166,25 +299,6 @@ impl<'bytes> Section<'bytes> {
         };
 
         Ok((section, rest))
-    }
-
-    pub fn into_synth(self) -> Result<SynthSection, Error> {
-        trace!("into_synth section id {}", self.id());
-        match self {
-            Section::Custom(x) => Ok(SynthSection::Custom(x.into_synth())),
-            Section::Type(x) => Ok(SynthSection::Type(x.into_synth()?)),
-            Section::Import(x) => Ok(SynthSection::Import(x.into_synth()?)),
-            Section::Function(x) => Ok(SynthSection::Function(x.into_synth()?)),
-            Section::Table(x) => Ok(SynthSection::Table(x.into_synth()?)),
-            Section::Memory(x) => Ok(SynthSection::Memory(x.into_synth()?)),
-            Section::Global(x) => Ok(SynthSection::Global(x.into_synth())),
-            Section::Export(x) => Ok(SynthSection::Export(x.into_synth())),
-            Section::Start(x) => Ok(SynthSection::Start(x.into_synth())),
-            Section::Element(x) => Ok(SynthSection::Element(x.into_synth())),
-            Section::Code(x) => Ok(SynthSection::Code(x.into_synth()?)),
-            Section::Data(x) => Ok(SynthSection::Data(x.into_synth()?)),
-            Section::DataCount(x) => Ok(SynthSection::DataCount(x.into_synth())),
-        }
     }
 
     /// Returns the ID of the section.

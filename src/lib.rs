@@ -59,8 +59,13 @@ pub enum Error {
     Opcode(u8),
     #[error("invalid data section tag {0}")]
     DataSectionTag(u32),
+    // TODO: separate error type among parse/synth/instrument codes
     #[error("I/O error")]
     Io(#[source] io::Error),
+    #[error("section {0} is missing")]
+    MissingSection(&'static str),
+    #[error("duplicate {0} section")]
+    DuplicateSection(&'static str),
 }
 
 /// Convenince trait for reading bytes.

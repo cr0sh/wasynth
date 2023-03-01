@@ -153,8 +153,8 @@ impl Display for ResultType {
 /// <https://webassembly.github.io/spec/core/binary/types.html#function-types>
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FuncType {
-    param: ResultType,
-    result: ResultType,
+    pub(crate) param: ResultType,
+    pub(crate) result: ResultType,
 }
 
 impl FuncType {

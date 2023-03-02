@@ -351,16 +351,6 @@ pub trait WriteExt: Write {
 
 impl<T: Write> WriteExt for T {}
 
-#[export_name = "install_instrumentation"]
-pub fn install_instrumentation(wasm: &[u8]) -> Result<Vec<u8>, Error> {
-    let mut buf = Vec::new();
-    parse::Module::from_binary(wasm)?
-        .into_synth()?
-        .write_into(&mut buf)
-        .map_err(Error::Io)?;
-    Ok(buf)
-}
-
 #[cfg(all(test, not(feature = "bytes_trace")))]
 mod tests {
     use std::io::Write;

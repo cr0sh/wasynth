@@ -293,11 +293,7 @@ pub enum Instruction {
     I64TruncSatF64S,
     I64TruncSatF64U,
 
-    Vector(VectorInstruction),
-}
-
-#[derive(Clone, Debug)]
-pub enum VectorInstruction {
+    // Vector instructions
     V128Load(MemArg),
     V128Load8x8S(MemArg),
     V128Load8x8U(MemArg),
@@ -996,8 +992,374 @@ impl Instruction {
                 }
             }
             0xFD => {
-                let (v, bytes) = VectorInstruction::from_bytes(bytes)?;
-                Ok((Self::Vector(v), bytes))
+                let (subop, bytes) = bytes.advance_u32()?;
+                match subop {
+                    0 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load(ma), bytes))
+                    }
+                    1 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load8x8S(ma), bytes))
+                    }
+                    2 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load8x8U(ma), bytes))
+                    }
+                    3 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load16x4S(ma), bytes))
+                    }
+                    4 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load16x4U(ma), bytes))
+                    }
+                    5 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32x2S(ma), bytes))
+                    }
+                    6 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32x2U(ma), bytes))
+                    }
+                    7 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load8Splat(ma), bytes))
+                    }
+                    8 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load16Splat(ma), bytes))
+                    }
+                    9 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32Splat(ma), bytes))
+                    }
+                    10 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load64Splat(ma), bytes))
+                    }
+                    92 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load32Zero(ma), bytes))
+                    }
+                    93 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Load64Zero(ma), bytes))
+                    }
+                    11 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        Ok((Self::V128Store(ma), bytes))
+                    }
+                    84 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load8Lane(ma, li), bytes))
+                    }
+                    85 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load16Lane(ma, li), bytes))
+                    }
+                    86 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load32Lane(ma, li), bytes))
+                    }
+                    87 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Load64Lane(ma, li), bytes))
+                    }
+                    88 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store8Lane(ma, li), bytes))
+                    }
+                    89 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store16Lane(ma, li), bytes))
+                    }
+                    90 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store32Lane(ma, li), bytes))
+                    }
+                    91 => {
+                        let (ma, bytes) = MemArg::from_bytes(bytes)?;
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::V128Store64Lane(ma, li), bytes))
+                    }
+                    12 => {
+                        let (v128, bytes) = bytes.advance::<16>()?;
+                        Ok((Self::V128Const(u128::from_le_bytes(*v128)), bytes))
+                    }
+                    13 => {
+                        let mut lis = [0u32; 16];
+                        let mut bytes = bytes;
+                        for li in &mut lis {
+                            let (li_, bytes_) = bytes.advance_u32()?;
+                            *li = li_;
+                            bytes = bytes_;
+                        }
+                        Ok((Self::I8x16Shuffle(lis), bytes))
+                    }
+                    21 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I8x16ExtractLaneS(li), bytes))
+                    }
+                    22 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I8x16ExtractLaneU(li), bytes))
+                    }
+                    23 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I8x16ReplaceLane(li), bytes))
+                    }
+                    24 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I16x8ExtractLaneS(li), bytes))
+                    }
+                    25 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I16x8ExtractLaneU(li), bytes))
+                    }
+                    26 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I16x8ReplaceLane(li), bytes))
+                    }
+                    27 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I32x4ExtractLane(li), bytes))
+                    }
+                    28 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I32x4ReplaceLane(li), bytes))
+                    }
+                    29 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I64x2ExtractLane(li), bytes))
+                    }
+                    30 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::I64x2ReplaceLane(li), bytes))
+                    }
+                    31 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F32x4ExtractLane(li), bytes))
+                    }
+                    32 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F32x4ReplaceLane(li), bytes))
+                    }
+                    33 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F64x2ExtractLane(li), bytes))
+                    }
+                    34 => {
+                        let (li, bytes) = bytes.advance_u32()?;
+                        Ok((Self::F64x2ReplaceLane(li), bytes))
+                    }
+                    14 => Ok((Self::I8X16Swizzle, bytes)),
+                    15 => Ok((Self::I8x16Splat, bytes)),
+                    16 => Ok((Self::I16x8Splat, bytes)),
+                    17 => Ok((Self::I32x4Splat, bytes)),
+                    18 => Ok((Self::I64x2Splat, bytes)),
+                    19 => Ok((Self::F32x4Splat, bytes)),
+                    20 => Ok((Self::F64x2Splat, bytes)),
+                    35 => Ok((Self::I8x16Eq, bytes)),
+                    36 => Ok((Self::I8x16Ne, bytes)),
+                    37 => Ok((Self::I8X16LtS, bytes)),
+                    38 => Ok((Self::I8X16LtU, bytes)),
+                    39 => Ok((Self::I8X16GtS, bytes)),
+                    40 => Ok((Self::I8X16GtU, bytes)),
+                    41 => Ok((Self::I8X16LeS, bytes)),
+                    42 => Ok((Self::I8X16LeU, bytes)),
+                    43 => Ok((Self::I8X16GeS, bytes)),
+                    44 => Ok((Self::I8X16GeU, bytes)),
+                    45 => Ok((Self::I16x8Eq, bytes)),
+                    46 => Ok((Self::I16x8Ne, bytes)),
+                    47 => Ok((Self::I16x8LtS, bytes)),
+                    48 => Ok((Self::I16x8LtU, bytes)),
+                    49 => Ok((Self::I16x8GtS, bytes)),
+                    50 => Ok((Self::I16x8GtU, bytes)),
+                    51 => Ok((Self::I16x8LeS, bytes)),
+                    52 => Ok((Self::I16x8LeU, bytes)),
+                    53 => Ok((Self::I16x8GeS, bytes)),
+                    54 => Ok((Self::I16x8GeU, bytes)),
+                    55 => Ok((Self::I32x4Eq, bytes)),
+                    56 => Ok((Self::I32x4Ne, bytes)),
+                    57 => Ok((Self::I32x4LtS, bytes)),
+                    58 => Ok((Self::I32x4LtU, bytes)),
+                    59 => Ok((Self::I32x4GtS, bytes)),
+                    60 => Ok((Self::I32x4GtU, bytes)),
+                    61 => Ok((Self::I32x4LeS, bytes)),
+                    62 => Ok((Self::I32x4LeU, bytes)),
+                    63 => Ok((Self::I32x4GeS, bytes)),
+                    64 => Ok((Self::I32x4GeU, bytes)),
+                    214 => Ok((Self::I64x2Eq, bytes)),
+                    215 => Ok((Self::I64x2Ne, bytes)),
+                    216 => Ok((Self::I64x2LtS, bytes)),
+                    217 => Ok((Self::I64x2GtS, bytes)),
+                    218 => Ok((Self::I64x2LeS, bytes)),
+                    219 => Ok((Self::I64x2GeS, bytes)),
+                    65 => Ok((Self::F32x4Eq, bytes)),
+                    66 => Ok((Self::F32x4Ne, bytes)),
+                    67 => Ok((Self::F32x4Lt, bytes)),
+                    68 => Ok((Self::F32x4Gt, bytes)),
+                    69 => Ok((Self::F32x4Le, bytes)),
+                    70 => Ok((Self::F32x4Ge, bytes)),
+                    71 => Ok((Self::F64x2Eq, bytes)),
+                    72 => Ok((Self::F64x2Ne, bytes)),
+                    73 => Ok((Self::F64x2Lt, bytes)),
+                    74 => Ok((Self::F64x2Gt, bytes)),
+                    75 => Ok((Self::F64x2Le, bytes)),
+                    76 => Ok((Self::F64x2Ge, bytes)),
+                    77 => Ok((Self::V128Not, bytes)),
+                    78 => Ok((Self::V128And, bytes)),
+                    79 => Ok((Self::V128AndNot, bytes)),
+                    80 => Ok((Self::V128Or, bytes)),
+                    81 => Ok((Self::V128Xor, bytes)),
+                    82 => Ok((Self::V128Bitselect, bytes)),
+                    83 => Ok((Self::V128AnyTrue, bytes)),
+                    96 => Ok((Self::I8x16Abs, bytes)),
+                    97 => Ok((Self::I8x16Neg, bytes)),
+                    98 => Ok((Self::I8x16Popcnt, bytes)),
+                    99 => Ok((Self::I8x16AllTrue, bytes)),
+                    100 => Ok((Self::I8x16Bitmask, bytes)),
+                    101 => Ok((Self::I8x16NarrowI16x8S, bytes)),
+                    102 => Ok((Self::I8x16NarrowI16x8U, bytes)),
+                    107 => Ok((Self::I8x16Shl, bytes)),
+                    108 => Ok((Self::I8x16ShrS, bytes)),
+                    109 => Ok((Self::I8x16ShrU, bytes)),
+                    110 => Ok((Self::I8x16Add, bytes)),
+                    111 => Ok((Self::I8x16AddSatS, bytes)),
+                    112 => Ok((Self::I8x16AddSatU, bytes)),
+                    113 => Ok((Self::I8x16Sub, bytes)),
+                    114 => Ok((Self::I8x16SubSatS, bytes)),
+                    115 => Ok((Self::I8x16SubSatU, bytes)),
+                    118 => Ok((Self::I8x16MinS, bytes)),
+                    119 => Ok((Self::I8x16MinU, bytes)),
+                    120 => Ok((Self::I8x16MaxS, bytes)),
+                    121 => Ok((Self::I8x16MaxU, bytes)),
+                    123 => Ok((Self::I8x16AvgrU, bytes)),
+                    124 => Ok((Self::I16x8ExtAddPairwiseI8x16S, bytes)),
+                    125 => Ok((Self::I16x8ExtAddPairwiseI8x16U, bytes)),
+                    128 => Ok((Self::I16x8Abs, bytes)),
+                    129 => Ok((Self::I16x8Neg, bytes)),
+                    130 => Ok((Self::I16x8Q15MulrSatS, bytes)),
+                    131 => Ok((Self::I16x8AllTrue, bytes)),
+                    132 => Ok((Self::I16x8Bitmask, bytes)),
+                    133 => Ok((Self::I16x8NarrowI32x4S, bytes)),
+                    134 => Ok((Self::I16x8NarrowI32x4U, bytes)),
+                    135 => Ok((Self::I16x8ExtendLowI8X16S, bytes)),
+                    136 => Ok((Self::I16x8ExtendHighI8X16S, bytes)),
+                    137 => Ok((Self::I16x8ExtendLowI8X16U, bytes)),
+                    138 => Ok((Self::I16x8ExtendHighI8X16U, bytes)),
+                    139 => Ok((Self::I16x8Shl, bytes)),
+                    140 => Ok((Self::I16x8ShrS, bytes)),
+                    141 => Ok((Self::I16x8ShrU, bytes)),
+                    142 => Ok((Self::I16x8Add, bytes)),
+                    143 => Ok((Self::I16x8AddSatS, bytes)),
+                    144 => Ok((Self::I16x8AddSatU, bytes)),
+                    145 => Ok((Self::I16x8Sub, bytes)),
+                    146 => Ok((Self::I16x8SubSatS, bytes)),
+                    147 => Ok((Self::I16x8SubSatU, bytes)),
+                    149 => Ok((Self::I16X8Mul, bytes)),
+                    150 => Ok((Self::I16x8MinS, bytes)),
+                    151 => Ok((Self::I16x8MinU, bytes)),
+                    152 => Ok((Self::I16x8MaxS, bytes)),
+                    153 => Ok((Self::I16x8MaxU, bytes)),
+                    155 => Ok((Self::I16x8AvgrU, bytes)),
+                    156 => Ok((Self::I16x8ExtmulLowI8x16S, bytes)),
+                    157 => Ok((Self::I16x8ExtmulHighI8x16S, bytes)),
+                    158 => Ok((Self::I16x8ExtmulLowI8x16U, bytes)),
+                    159 => Ok((Self::I16x8ExtmulHighI8x16U, bytes)),
+                    126 => Ok((Self::I32x4ExtAddPairwiseI16x8S, bytes)),
+                    127 => Ok((Self::I32x4ExtAddPairwiseI16x8U, bytes)),
+                    160 => Ok((Self::I32x4Abs, bytes)),
+                    161 => Ok((Self::I32x4Neg, bytes)),
+                    163 => Ok((Self::I32x4AllTrue, bytes)),
+                    164 => Ok((Self::I32x4Bitmask, bytes)),
+                    167 => Ok((Self::I32x4ExtendLowI16X8S, bytes)),
+                    168 => Ok((Self::I32x4ExtendHighI16X8S, bytes)),
+                    169 => Ok((Self::I32x4ExtendLowI16X8U, bytes)),
+                    170 => Ok((Self::I32x4ExtendHighI16X8U, bytes)),
+                    171 => Ok((Self::I32x4Shl, bytes)),
+                    172 => Ok((Self::I32x4ShrS, bytes)),
+                    173 => Ok((Self::I32x4ShrU, bytes)),
+                    174 => Ok((Self::I32x4Add, bytes)),
+                    177 => Ok((Self::I32x4Sub, bytes)),
+                    181 => Ok((Self::I32x4Mul, bytes)),
+                    182 => Ok((Self::I32x4MinS, bytes)),
+                    183 => Ok((Self::I32x4MinU, bytes)),
+                    184 => Ok((Self::I32x4MaxS, bytes)),
+                    185 => Ok((Self::I32x4MaxU, bytes)),
+                    186 => Ok((Self::I32x4DotI16x8S, bytes)),
+                    188 => Ok((Self::I32x4ExtmulLowI16x8S, bytes)),
+                    189 => Ok((Self::I32x4ExtmulHighI16x8S, bytes)),
+                    190 => Ok((Self::I32x4ExtmulLowI16x8U, bytes)),
+                    191 => Ok((Self::I32x4ExtmulHighI16x8U, bytes)),
+                    192 => Ok((Self::I64x2Abs, bytes)),
+                    193 => Ok((Self::I64x2Neg, bytes)),
+                    195 => Ok((Self::I64x2AllTrue, bytes)),
+                    196 => Ok((Self::I64x2Bitmask, bytes)),
+                    199 => Ok((Self::I64x2ExtendLowI16X8S, bytes)),
+                    200 => Ok((Self::I64x2ExtendHighI16X8S, bytes)),
+                    201 => Ok((Self::I64x2ExtendLowI16X8U, bytes)),
+                    202 => Ok((Self::I64x2ExtendHighI16X8U, bytes)),
+                    203 => Ok((Self::I64x2Shl, bytes)),
+                    204 => Ok((Self::I64x2ShrS, bytes)),
+                    205 => Ok((Self::I64x2ShrU, bytes)),
+                    206 => Ok((Self::I64x2Add, bytes)),
+                    209 => Ok((Self::I64x2Sub, bytes)),
+                    213 => Ok((Self::I64x2Mul, bytes)),
+                    220 => Ok((Self::I64x2ExtmulLowI32x4S, bytes)),
+                    221 => Ok((Self::I64x2ExtmulHighI32x4S, bytes)),
+                    222 => Ok((Self::I64x2ExtmulLowI32x4U, bytes)),
+                    223 => Ok((Self::I64x2ExtmulHighI32x4U, bytes)),
+                    103 => Ok((Self::F32x4Ceil, bytes)),
+                    104 => Ok((Self::F32x4Floor, bytes)),
+                    105 => Ok((Self::F32x4Trunc, bytes)),
+                    106 => Ok((Self::F32x4Nearest, bytes)),
+                    224 => Ok((Self::F32x4Abs, bytes)),
+                    225 => Ok((Self::F32x4Neg, bytes)),
+                    227 => Ok((Self::F32x4Sqrt, bytes)),
+                    228 => Ok((Self::F32x4Add, bytes)),
+                    229 => Ok((Self::F32x4Sub, bytes)),
+                    230 => Ok((Self::F32x4Mul, bytes)),
+                    231 => Ok((Self::F32x4Div, bytes)),
+                    232 => Ok((Self::F32x4Min, bytes)),
+                    233 => Ok((Self::F32x4Max, bytes)),
+                    234 => Ok((Self::F32x4Pmin, bytes)),
+                    235 => Ok((Self::F32x4Pmax, bytes)),
+                    116 => Ok((Self::F64x2Ceil, bytes)),
+                    117 => Ok((Self::F64x2Floor, bytes)),
+                    122 => Ok((Self::F64x2Trunc, bytes)),
+                    148 => Ok((Self::F64x2Nearest, bytes)),
+                    236 => Ok((Self::F64x2Abs, bytes)),
+                    237 => Ok((Self::F64x2Neg, bytes)),
+                    239 => Ok((Self::F64x2Sqrt, bytes)),
+                    240 => Ok((Self::F64x2Add, bytes)),
+                    241 => Ok((Self::F64x2Sub, bytes)),
+                    242 => Ok((Self::F64x2Mul, bytes)),
+                    243 => Ok((Self::F64x2Div, bytes)),
+                    244 => Ok((Self::F64x2Min, bytes)),
+                    245 => Ok((Self::F64x2Max, bytes)),
+                    246 => Ok((Self::F64x2Pmin, bytes)),
+                    247 => Ok((Self::F64x2Pmax, bytes)),
+                    248 => Ok((Self::I32x4TruncSatF32x4S, bytes)),
+                    249 => Ok((Self::I32x4TruncSatF32x4U, bytes)),
+                    250 => Ok((Self::F32x4ConvertI32x4S, bytes)),
+                    251 => Ok((Self::F32x4ConvertI32x4U, bytes)),
+                    252 => Ok((Self::I32x4TruncSatF64x2SZero, bytes)),
+                    253 => Ok((Self::I32x4TruncSatF64x2UZero, bytes)),
+                    254 => Ok((Self::F64x2ConvertLowI32x4S, bytes)),
+                    255 => Ok((Self::F64x2ConvertLowI32x4U, bytes)),
+                    94 => Ok((Self::F32x4DemoteF64x2Zero, bytes)),
+                    95 => Ok((Self::F64x2PromoteLowF32x4, bytes)),
+                    _ => Err(Error::VectorInstructionSubopcode(subop)),
+                }
             }
             _ => Err(Error::Opcode(opcode)),
         }
@@ -1705,7 +2067,998 @@ impl Instruction {
                 wr.write_all(&[0xFC])?;
                 wr.write_u32(7)?;
             }
-            Instruction::Vector(v) => v.write_into(wr)?,
+            Instruction::V128Load(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(0)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8x8S(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(1)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8x8U(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(2)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load16x4S(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(3)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load16x4U(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(4)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32x2S(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(5)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32x2U(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(6)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(7)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load16Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(8)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(9)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load64Splat(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(10)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load32Zero(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(92)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load64Zero(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(93)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Store(ma) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(11)?;
+                ma.write_into(wr)?;
+            }
+            Instruction::V128Load8Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(84)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Load16Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(85)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Load32Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(86)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Load64Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(87)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store8Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(88)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store16Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(89)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store32Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(90)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Store64Lane(ma, li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(91)?;
+                ma.write_into(wr)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::V128Const(x) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(12)?;
+                wr.write_all(&x.to_le_bytes())?;
+            }
+            Instruction::I8x16Shuffle(lis) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(13)?;
+                for li in lis {
+                    wr.write_u32(*li)?;
+                }
+            }
+            Instruction::I8x16ExtractLaneS(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(21)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I8x16ExtractLaneU(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(22)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I8x16ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(23)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I16x8ExtractLaneS(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(24)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I16x8ExtractLaneU(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(25)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I16x8ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(26)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I32x4ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(27)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I32x4ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(28)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I64x2ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(29)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I64x2ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(30)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F32x4ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(31)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F32x4ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(32)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F64x2ExtractLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(33)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::F64x2ReplaceLane(li) => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(34)?;
+                wr.write_u32(*li)?;
+            }
+            Instruction::I8X16Swizzle => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(14)?;
+            }
+            Instruction::I8x16Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(15)?;
+            }
+            Instruction::I16x8Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(16)?;
+            }
+            Instruction::I32x4Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(17)?;
+            }
+            Instruction::I64x2Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(18)?;
+            }
+            Instruction::F32x4Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(19)?;
+            }
+            Instruction::F64x2Splat => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(20)?;
+            }
+            Instruction::I8x16Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(35)?;
+            }
+            Instruction::I8x16Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(36)?;
+            }
+            Instruction::I8X16LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(37)?;
+            }
+            Instruction::I8X16LtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(38)?;
+            }
+            Instruction::I8X16GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(39)?;
+            }
+            Instruction::I8X16GtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(40)?;
+            }
+            Instruction::I8X16LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(41)?;
+            }
+            Instruction::I8X16LeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(42)?;
+            }
+            Instruction::I8X16GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(43)?;
+            }
+            Instruction::I8X16GeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(44)?;
+            }
+            Instruction::I16x8Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(45)?;
+            }
+            Instruction::I16x8Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(46)?;
+            }
+            Instruction::I16x8LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(47)?;
+            }
+            Instruction::I16x8LtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(48)?;
+            }
+            Instruction::I16x8GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(49)?;
+            }
+            Instruction::I16x8GtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(50)?;
+            }
+            Instruction::I16x8LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(51)?;
+            }
+            Instruction::I16x8LeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(52)?;
+            }
+            Instruction::I16x8GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(53)?;
+            }
+            Instruction::I16x8GeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(54)?;
+            }
+            Instruction::I32x4Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(55)?;
+            }
+            Instruction::I32x4Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(56)?;
+            }
+            Instruction::I32x4LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(57)?;
+            }
+            Instruction::I32x4LtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(58)?;
+            }
+            Instruction::I32x4GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(59)?;
+            }
+            Instruction::I32x4GtU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(60)?;
+            }
+            Instruction::I32x4LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(61)?;
+            }
+            Instruction::I32x4LeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(62)?;
+            }
+            Instruction::I32x4GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(63)?;
+            }
+            Instruction::I32x4GeU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(64)?;
+            }
+            Instruction::I64x2Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(214)?;
+            }
+            Instruction::I64x2Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(215)?;
+            }
+            Instruction::I64x2LtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(216)?;
+            }
+            Instruction::I64x2GtS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(217)?;
+            }
+            Instruction::I64x2LeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(218)?;
+            }
+            Instruction::I64x2GeS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(219)?;
+            }
+            Instruction::F32x4Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(65)?;
+            }
+            Instruction::F32x4Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(66)?;
+            }
+            Instruction::F32x4Lt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(67)?;
+            }
+            Instruction::F32x4Gt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(68)?;
+            }
+            Instruction::F32x4Le => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(69)?;
+            }
+            Instruction::F32x4Ge => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(70)?;
+            }
+            Instruction::F64x2Eq => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(71)?;
+            }
+            Instruction::F64x2Ne => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(72)?;
+            }
+            Instruction::F64x2Lt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(73)?;
+            }
+            Instruction::F64x2Gt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(74)?;
+            }
+            Instruction::F64x2Le => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(75)?;
+            }
+            Instruction::F64x2Ge => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(76)?;
+            }
+            Instruction::V128Not => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(77)?;
+            }
+            Instruction::V128And => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(78)?;
+            }
+            Instruction::V128AndNot => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(79)?;
+            }
+            Instruction::V128Or => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(80)?;
+            }
+            Instruction::V128Xor => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(81)?;
+            }
+            Instruction::V128Bitselect => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(82)?;
+            }
+            Instruction::V128AnyTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(83)?;
+            }
+            Instruction::I8x16Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(96)?;
+            }
+            Instruction::I8x16Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(97)?;
+            }
+            Instruction::I8x16Popcnt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(98)?;
+            }
+            Instruction::I8x16AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(99)?;
+            }
+            Instruction::I8x16Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(100)?;
+            }
+            Instruction::I8x16NarrowI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(101)?;
+            }
+            Instruction::I8x16NarrowI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(102)?;
+            }
+            Instruction::I8x16Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(107)?;
+            }
+            Instruction::I8x16ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(108)?;
+            }
+            Instruction::I8x16ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(109)?;
+            }
+            Instruction::I8x16Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(110)?;
+            }
+            Instruction::I8x16AddSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(111)?;
+            }
+            Instruction::I8x16AddSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(112)?;
+            }
+            Instruction::I8x16Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(113)?;
+            }
+            Instruction::I8x16SubSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(114)?;
+            }
+            Instruction::I8x16SubSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(115)?;
+            }
+            Instruction::I8x16MinS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(118)?;
+            }
+            Instruction::I8x16MinU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(119)?;
+            }
+            Instruction::I8x16MaxS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(120)?;
+            }
+            Instruction::I8x16MaxU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(121)?;
+            }
+            Instruction::I8x16AvgrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(123)?;
+            }
+            Instruction::I16x8ExtAddPairwiseI8x16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(124)?;
+            }
+            Instruction::I16x8ExtAddPairwiseI8x16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(125)?;
+            }
+            Instruction::I16x8Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(128)?;
+            }
+            Instruction::I16x8Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(129)?;
+            }
+            Instruction::I16x8Q15MulrSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(130)?;
+            }
+            Instruction::I16x8AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(131)?;
+            }
+            Instruction::I16x8Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(132)?;
+            }
+            Instruction::I16x8NarrowI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(133)?;
+            }
+            Instruction::I16x8NarrowI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(134)?;
+            }
+            Instruction::I16x8ExtendLowI8X16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(135)?;
+            }
+            Instruction::I16x8ExtendHighI8X16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(136)?;
+            }
+            Instruction::I16x8ExtendLowI8X16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(137)?;
+            }
+            Instruction::I16x8ExtendHighI8X16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(138)?;
+            }
+            Instruction::I16x8Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(139)?;
+            }
+            Instruction::I16x8ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(140)?;
+            }
+            Instruction::I16x8ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(141)?;
+            }
+            Instruction::I16x8Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(142)?;
+            }
+            Instruction::I16x8AddSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(143)?;
+            }
+            Instruction::I16x8AddSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(144)?;
+            }
+            Instruction::I16x8Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(145)?;
+            }
+            Instruction::I16x8SubSatS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(146)?;
+            }
+            Instruction::I16x8SubSatU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(147)?;
+            }
+            Instruction::I16X8Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(149)?;
+            }
+            Instruction::I16x8MinS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(150)?;
+            }
+            Instruction::I16x8MinU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(151)?;
+            }
+            Instruction::I16x8MaxS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(152)?;
+            }
+            Instruction::I16x8MaxU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(153)?;
+            }
+            Instruction::I16x8AvgrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(155)?;
+            }
+            Instruction::I16x8ExtmulLowI8x16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(156)?;
+            }
+            Instruction::I16x8ExtmulHighI8x16S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(157)?;
+            }
+            Instruction::I16x8ExtmulLowI8x16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(158)?;
+            }
+            Instruction::I16x8ExtmulHighI8x16U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(159)?;
+            }
+            Instruction::I32x4ExtAddPairwiseI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(126)?;
+            }
+            Instruction::I32x4ExtAddPairwiseI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(127)?;
+            }
+            Instruction::I32x4Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(160)?;
+            }
+            Instruction::I32x4Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(161)?;
+            }
+            Instruction::I32x4AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(163)?;
+            }
+            Instruction::I32x4Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(164)?;
+            }
+            Instruction::I32x4ExtendLowI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(167)?;
+            }
+            Instruction::I32x4ExtendHighI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(168)?;
+            }
+            Instruction::I32x4ExtendLowI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(169)?;
+            }
+            Instruction::I32x4ExtendHighI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(170)?;
+            }
+            Instruction::I32x4Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(171)?;
+            }
+            Instruction::I32x4ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(172)?;
+            }
+            Instruction::I32x4ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(173)?;
+            }
+            Instruction::I32x4Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(174)?;
+            }
+            Instruction::I32x4Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(177)?;
+            }
+            Instruction::I32x4Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(181)?;
+            }
+            Instruction::I32x4MinS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(182)?;
+            }
+            Instruction::I32x4MinU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(183)?;
+            }
+            Instruction::I32x4MaxS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(184)?;
+            }
+            Instruction::I32x4MaxU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(185)?;
+            }
+            Instruction::I32x4DotI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(186)?;
+            }
+            Instruction::I32x4ExtmulLowI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(188)?;
+            }
+            Instruction::I32x4ExtmulHighI16x8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(189)?;
+            }
+            Instruction::I32x4ExtmulLowI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(190)?;
+            }
+            Instruction::I32x4ExtmulHighI16x8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(191)?;
+            }
+            Instruction::I64x2Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(192)?;
+            }
+            Instruction::I64x2Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(193)?;
+            }
+            Instruction::I64x2AllTrue => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(195)?;
+            }
+            Instruction::I64x2Bitmask => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(196)?;
+            }
+            Instruction::I64x2ExtendLowI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(199)?;
+            }
+            Instruction::I64x2ExtendHighI16X8S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(200)?;
+            }
+            Instruction::I64x2ExtendLowI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(201)?;
+            }
+            Instruction::I64x2ExtendHighI16X8U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(202)?;
+            }
+            Instruction::I64x2Shl => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(203)?;
+            }
+            Instruction::I64x2ShrS => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(204)?;
+            }
+            Instruction::I64x2ShrU => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(205)?;
+            }
+            Instruction::I64x2Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(206)?;
+            }
+            Instruction::I64x2Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(209)?;
+            }
+            Instruction::I64x2Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(213)?;
+            }
+            Instruction::I64x2ExtmulLowI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(220)?;
+            }
+            Instruction::I64x2ExtmulHighI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(221)?;
+            }
+            Instruction::I64x2ExtmulLowI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(222)?;
+            }
+            Instruction::I64x2ExtmulHighI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(223)?;
+            }
+            Instruction::F32x4Ceil => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(103)?;
+            }
+            Instruction::F32x4Floor => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(104)?;
+            }
+            Instruction::F32x4Trunc => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(105)?;
+            }
+            Instruction::F32x4Nearest => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(106)?;
+            }
+            Instruction::F32x4Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(224)?;
+            }
+            Instruction::F32x4Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(225)?;
+            }
+            Instruction::F32x4Sqrt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(227)?;
+            }
+            Instruction::F32x4Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(228)?;
+            }
+            Instruction::F32x4Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(229)?;
+            }
+            Instruction::F32x4Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(230)?;
+            }
+            Instruction::F32x4Div => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(231)?;
+            }
+            Instruction::F32x4Min => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(232)?;
+            }
+            Instruction::F32x4Max => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(233)?;
+            }
+            Instruction::F32x4Pmin => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(234)?;
+            }
+            Instruction::F32x4Pmax => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(235)?;
+            }
+            Instruction::F64x2Ceil => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(116)?;
+            }
+            Instruction::F64x2Floor => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(117)?;
+            }
+            Instruction::F64x2Trunc => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(122)?;
+            }
+            Instruction::F64x2Nearest => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(148)?;
+            }
+            Instruction::F64x2Abs => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(236)?;
+            }
+            Instruction::F64x2Neg => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(237)?;
+            }
+            Instruction::F64x2Sqrt => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(239)?;
+            }
+            Instruction::F64x2Add => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(240)?;
+            }
+            Instruction::F64x2Sub => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(241)?;
+            }
+            Instruction::F64x2Mul => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(242)?;
+            }
+            Instruction::F64x2Div => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(243)?;
+            }
+            Instruction::F64x2Min => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(244)?;
+            }
+            Instruction::F64x2Max => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(245)?;
+            }
+            Instruction::F64x2Pmin => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(246)?;
+            }
+            Instruction::F64x2Pmax => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(247)?;
+            }
+            Instruction::I32x4TruncSatF32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(248)?;
+            }
+            Instruction::I32x4TruncSatF32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(249)?;
+            }
+            Instruction::F32x4ConvertI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(250)?;
+            }
+            Instruction::F32x4ConvertI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(251)?;
+            }
+            Instruction::I32x4TruncSatF64x2SZero => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(252)?;
+            }
+            Instruction::I32x4TruncSatF64x2UZero => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(253)?;
+            }
+            Instruction::F64x2ConvertLowI32x4S => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(254)?;
+            }
+            Instruction::F64x2ConvertLowI32x4U => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(255)?;
+            }
+            Instruction::F32x4DemoteF64x2Zero => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(94)?;
+            }
+            Instruction::F64x2PromoteLowF32x4 => {
+                wr.write_all(&[0xFD])?;
+                wr.write_u32(95)?;
+            }
         }
         Ok(())
     }
@@ -1719,1377 +3072,6 @@ impl Instruction {
             x.write_into(wr)?;
         }
         wr.write_all(&[terminator])?;
-        Ok(())
-    }
-}
-
-impl VectorInstruction {
-    pub(crate) fn from_bytes(bytes: &[u8]) -> Result<(Self, &[u8]), Error> {
-        let (subop, bytes) = bytes.advance_u32()?;
-        match subop {
-            0 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load(ma), bytes))
-            }
-            1 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load8x8S(ma), bytes))
-            }
-            2 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load8x8U(ma), bytes))
-            }
-            3 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load16x4S(ma), bytes))
-            }
-            4 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load16x4U(ma), bytes))
-            }
-            5 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load32x2S(ma), bytes))
-            }
-            6 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load32x2U(ma), bytes))
-            }
-            7 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load8Splat(ma), bytes))
-            }
-            8 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load16Splat(ma), bytes))
-            }
-            9 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load32Splat(ma), bytes))
-            }
-            10 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load64Splat(ma), bytes))
-            }
-            92 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load32Zero(ma), bytes))
-            }
-            93 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Load64Zero(ma), bytes))
-            }
-            11 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                Ok((Self::V128Store(ma), bytes))
-            }
-            84 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Load8Lane(ma, li), bytes))
-            }
-            85 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Load16Lane(ma, li), bytes))
-            }
-            86 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Load32Lane(ma, li), bytes))
-            }
-            87 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Load64Lane(ma, li), bytes))
-            }
-            88 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Store8Lane(ma, li), bytes))
-            }
-            89 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Store16Lane(ma, li), bytes))
-            }
-            90 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Store32Lane(ma, li), bytes))
-            }
-            91 => {
-                let (ma, bytes) = MemArg::from_bytes(bytes)?;
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::V128Store64Lane(ma, li), bytes))
-            }
-            12 => {
-                let (v128, bytes) = bytes.advance::<16>()?;
-                Ok((Self::V128Const(u128::from_le_bytes(*v128)), bytes))
-            }
-            13 => {
-                let mut lis = [0u32; 16];
-                let mut bytes = bytes;
-                for li in &mut lis {
-                    let (li_, bytes_) = bytes.advance_u32()?;
-                    *li = li_;
-                    bytes = bytes_;
-                }
-                Ok((Self::I8x16Shuffle(lis), bytes))
-            }
-            21 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I8x16ExtractLaneS(li), bytes))
-            }
-            22 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I8x16ExtractLaneU(li), bytes))
-            }
-            23 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I8x16ReplaceLane(li), bytes))
-            }
-            24 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I16x8ExtractLaneS(li), bytes))
-            }
-            25 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I16x8ExtractLaneU(li), bytes))
-            }
-            26 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I16x8ReplaceLane(li), bytes))
-            }
-            27 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I32x4ExtractLane(li), bytes))
-            }
-            28 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I32x4ReplaceLane(li), bytes))
-            }
-            29 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I64x2ExtractLane(li), bytes))
-            }
-            30 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::I64x2ReplaceLane(li), bytes))
-            }
-            31 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::F32x4ExtractLane(li), bytes))
-            }
-            32 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::F32x4ReplaceLane(li), bytes))
-            }
-            33 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::F64x2ExtractLane(li), bytes))
-            }
-            34 => {
-                let (li, bytes) = bytes.advance_u32()?;
-                Ok((Self::F64x2ReplaceLane(li), bytes))
-            }
-            14 => Ok((Self::I8X16Swizzle, bytes)),
-            15 => Ok((Self::I8x16Splat, bytes)),
-            16 => Ok((Self::I16x8Splat, bytes)),
-            17 => Ok((Self::I32x4Splat, bytes)),
-            18 => Ok((Self::I64x2Splat, bytes)),
-            19 => Ok((Self::F32x4Splat, bytes)),
-            20 => Ok((Self::F64x2Splat, bytes)),
-            35 => Ok((Self::I8x16Eq, bytes)),
-            36 => Ok((Self::I8x16Ne, bytes)),
-            37 => Ok((Self::I8X16LtS, bytes)),
-            38 => Ok((Self::I8X16LtU, bytes)),
-            39 => Ok((Self::I8X16GtS, bytes)),
-            40 => Ok((Self::I8X16GtU, bytes)),
-            41 => Ok((Self::I8X16LeS, bytes)),
-            42 => Ok((Self::I8X16LeU, bytes)),
-            43 => Ok((Self::I8X16GeS, bytes)),
-            44 => Ok((Self::I8X16GeU, bytes)),
-            45 => Ok((Self::I16x8Eq, bytes)),
-            46 => Ok((Self::I16x8Ne, bytes)),
-            47 => Ok((Self::I16x8LtS, bytes)),
-            48 => Ok((Self::I16x8LtU, bytes)),
-            49 => Ok((Self::I16x8GtS, bytes)),
-            50 => Ok((Self::I16x8GtU, bytes)),
-            51 => Ok((Self::I16x8LeS, bytes)),
-            52 => Ok((Self::I16x8LeU, bytes)),
-            53 => Ok((Self::I16x8GeS, bytes)),
-            54 => Ok((Self::I16x8GeU, bytes)),
-            55 => Ok((Self::I32x4Eq, bytes)),
-            56 => Ok((Self::I32x4Ne, bytes)),
-            57 => Ok((Self::I32x4LtS, bytes)),
-            58 => Ok((Self::I32x4LtU, bytes)),
-            59 => Ok((Self::I32x4GtS, bytes)),
-            60 => Ok((Self::I32x4GtU, bytes)),
-            61 => Ok((Self::I32x4LeS, bytes)),
-            62 => Ok((Self::I32x4LeU, bytes)),
-            63 => Ok((Self::I32x4GeS, bytes)),
-            64 => Ok((Self::I32x4GeU, bytes)),
-            214 => Ok((Self::I64x2Eq, bytes)),
-            215 => Ok((Self::I64x2Ne, bytes)),
-            216 => Ok((Self::I64x2LtS, bytes)),
-            217 => Ok((Self::I64x2GtS, bytes)),
-            218 => Ok((Self::I64x2LeS, bytes)),
-            219 => Ok((Self::I64x2GeS, bytes)),
-            65 => Ok((Self::F32x4Eq, bytes)),
-            66 => Ok((Self::F32x4Ne, bytes)),
-            67 => Ok((Self::F32x4Lt, bytes)),
-            68 => Ok((Self::F32x4Gt, bytes)),
-            69 => Ok((Self::F32x4Le, bytes)),
-            70 => Ok((Self::F32x4Ge, bytes)),
-            71 => Ok((Self::F64x2Eq, bytes)),
-            72 => Ok((Self::F64x2Ne, bytes)),
-            73 => Ok((Self::F64x2Lt, bytes)),
-            74 => Ok((Self::F64x2Gt, bytes)),
-            75 => Ok((Self::F64x2Le, bytes)),
-            76 => Ok((Self::F64x2Ge, bytes)),
-            77 => Ok((Self::V128Not, bytes)),
-            78 => Ok((Self::V128And, bytes)),
-            79 => Ok((Self::V128AndNot, bytes)),
-            80 => Ok((Self::V128Or, bytes)),
-            81 => Ok((Self::V128Xor, bytes)),
-            82 => Ok((Self::V128Bitselect, bytes)),
-            83 => Ok((Self::V128AnyTrue, bytes)),
-            96 => Ok((Self::I8x16Abs, bytes)),
-            97 => Ok((Self::I8x16Neg, bytes)),
-            98 => Ok((Self::I8x16Popcnt, bytes)),
-            99 => Ok((Self::I8x16AllTrue, bytes)),
-            100 => Ok((Self::I8x16Bitmask, bytes)),
-            101 => Ok((Self::I8x16NarrowI16x8S, bytes)),
-            102 => Ok((Self::I8x16NarrowI16x8U, bytes)),
-            107 => Ok((Self::I8x16Shl, bytes)),
-            108 => Ok((Self::I8x16ShrS, bytes)),
-            109 => Ok((Self::I8x16ShrU, bytes)),
-            110 => Ok((Self::I8x16Add, bytes)),
-            111 => Ok((Self::I8x16AddSatS, bytes)),
-            112 => Ok((Self::I8x16AddSatU, bytes)),
-            113 => Ok((Self::I8x16Sub, bytes)),
-            114 => Ok((Self::I8x16SubSatS, bytes)),
-            115 => Ok((Self::I8x16SubSatU, bytes)),
-            118 => Ok((Self::I8x16MinS, bytes)),
-            119 => Ok((Self::I8x16MinU, bytes)),
-            120 => Ok((Self::I8x16MaxS, bytes)),
-            121 => Ok((Self::I8x16MaxU, bytes)),
-            123 => Ok((Self::I8x16AvgrU, bytes)),
-            124 => Ok((Self::I16x8ExtAddPairwiseI8x16S, bytes)),
-            125 => Ok((Self::I16x8ExtAddPairwiseI8x16U, bytes)),
-            128 => Ok((Self::I16x8Abs, bytes)),
-            129 => Ok((Self::I16x8Neg, bytes)),
-            130 => Ok((Self::I16x8Q15MulrSatS, bytes)),
-            131 => Ok((Self::I16x8AllTrue, bytes)),
-            132 => Ok((Self::I16x8Bitmask, bytes)),
-            133 => Ok((Self::I16x8NarrowI32x4S, bytes)),
-            134 => Ok((Self::I16x8NarrowI32x4U, bytes)),
-            135 => Ok((Self::I16x8ExtendLowI8X16S, bytes)),
-            136 => Ok((Self::I16x8ExtendHighI8X16S, bytes)),
-            137 => Ok((Self::I16x8ExtendLowI8X16U, bytes)),
-            138 => Ok((Self::I16x8ExtendHighI8X16U, bytes)),
-            139 => Ok((Self::I16x8Shl, bytes)),
-            140 => Ok((Self::I16x8ShrS, bytes)),
-            141 => Ok((Self::I16x8ShrU, bytes)),
-            142 => Ok((Self::I16x8Add, bytes)),
-            143 => Ok((Self::I16x8AddSatS, bytes)),
-            144 => Ok((Self::I16x8AddSatU, bytes)),
-            145 => Ok((Self::I16x8Sub, bytes)),
-            146 => Ok((Self::I16x8SubSatS, bytes)),
-            147 => Ok((Self::I16x8SubSatU, bytes)),
-            149 => Ok((Self::I16X8Mul, bytes)),
-            150 => Ok((Self::I16x8MinS, bytes)),
-            151 => Ok((Self::I16x8MinU, bytes)),
-            152 => Ok((Self::I16x8MaxS, bytes)),
-            153 => Ok((Self::I16x8MaxU, bytes)),
-            155 => Ok((Self::I16x8AvgrU, bytes)),
-            156 => Ok((Self::I16x8ExtmulLowI8x16S, bytes)),
-            157 => Ok((Self::I16x8ExtmulHighI8x16S, bytes)),
-            158 => Ok((Self::I16x8ExtmulLowI8x16U, bytes)),
-            159 => Ok((Self::I16x8ExtmulHighI8x16U, bytes)),
-            126 => Ok((Self::I32x4ExtAddPairwiseI16x8S, bytes)),
-            127 => Ok((Self::I32x4ExtAddPairwiseI16x8U, bytes)),
-            160 => Ok((Self::I32x4Abs, bytes)),
-            161 => Ok((Self::I32x4Neg, bytes)),
-            163 => Ok((Self::I32x4AllTrue, bytes)),
-            164 => Ok((Self::I32x4Bitmask, bytes)),
-            167 => Ok((Self::I32x4ExtendLowI16X8S, bytes)),
-            168 => Ok((Self::I32x4ExtendHighI16X8S, bytes)),
-            169 => Ok((Self::I32x4ExtendLowI16X8U, bytes)),
-            170 => Ok((Self::I32x4ExtendHighI16X8U, bytes)),
-            171 => Ok((Self::I32x4Shl, bytes)),
-            172 => Ok((Self::I32x4ShrS, bytes)),
-            173 => Ok((Self::I32x4ShrU, bytes)),
-            174 => Ok((Self::I32x4Add, bytes)),
-            177 => Ok((Self::I32x4Sub, bytes)),
-            181 => Ok((Self::I32x4Mul, bytes)),
-            182 => Ok((Self::I32x4MinS, bytes)),
-            183 => Ok((Self::I32x4MinU, bytes)),
-            184 => Ok((Self::I32x4MaxS, bytes)),
-            185 => Ok((Self::I32x4MaxU, bytes)),
-            186 => Ok((Self::I32x4DotI16x8S, bytes)),
-            188 => Ok((Self::I32x4ExtmulLowI16x8S, bytes)),
-            189 => Ok((Self::I32x4ExtmulHighI16x8S, bytes)),
-            190 => Ok((Self::I32x4ExtmulLowI16x8U, bytes)),
-            191 => Ok((Self::I32x4ExtmulHighI16x8U, bytes)),
-            192 => Ok((Self::I64x2Abs, bytes)),
-            193 => Ok((Self::I64x2Neg, bytes)),
-            195 => Ok((Self::I64x2AllTrue, bytes)),
-            196 => Ok((Self::I64x2Bitmask, bytes)),
-            199 => Ok((Self::I64x2ExtendLowI16X8S, bytes)),
-            200 => Ok((Self::I64x2ExtendHighI16X8S, bytes)),
-            201 => Ok((Self::I64x2ExtendLowI16X8U, bytes)),
-            202 => Ok((Self::I64x2ExtendHighI16X8U, bytes)),
-            203 => Ok((Self::I64x2Shl, bytes)),
-            204 => Ok((Self::I64x2ShrS, bytes)),
-            205 => Ok((Self::I64x2ShrU, bytes)),
-            206 => Ok((Self::I64x2Add, bytes)),
-            209 => Ok((Self::I64x2Sub, bytes)),
-            213 => Ok((Self::I64x2Mul, bytes)),
-            220 => Ok((Self::I64x2ExtmulLowI32x4S, bytes)),
-            221 => Ok((Self::I64x2ExtmulHighI32x4S, bytes)),
-            222 => Ok((Self::I64x2ExtmulLowI32x4U, bytes)),
-            223 => Ok((Self::I64x2ExtmulHighI32x4U, bytes)),
-            103 => Ok((Self::F32x4Ceil, bytes)),
-            104 => Ok((Self::F32x4Floor, bytes)),
-            105 => Ok((Self::F32x4Trunc, bytes)),
-            106 => Ok((Self::F32x4Nearest, bytes)),
-            224 => Ok((Self::F32x4Abs, bytes)),
-            225 => Ok((Self::F32x4Neg, bytes)),
-            227 => Ok((Self::F32x4Sqrt, bytes)),
-            228 => Ok((Self::F32x4Add, bytes)),
-            229 => Ok((Self::F32x4Sub, bytes)),
-            230 => Ok((Self::F32x4Mul, bytes)),
-            231 => Ok((Self::F32x4Div, bytes)),
-            232 => Ok((Self::F32x4Min, bytes)),
-            233 => Ok((Self::F32x4Max, bytes)),
-            234 => Ok((Self::F32x4Pmin, bytes)),
-            235 => Ok((Self::F32x4Pmax, bytes)),
-            116 => Ok((Self::F64x2Ceil, bytes)),
-            117 => Ok((Self::F64x2Floor, bytes)),
-            122 => Ok((Self::F64x2Trunc, bytes)),
-            148 => Ok((Self::F64x2Nearest, bytes)),
-            236 => Ok((Self::F64x2Abs, bytes)),
-            237 => Ok((Self::F64x2Neg, bytes)),
-            239 => Ok((Self::F64x2Sqrt, bytes)),
-            240 => Ok((Self::F64x2Add, bytes)),
-            241 => Ok((Self::F64x2Sub, bytes)),
-            242 => Ok((Self::F64x2Mul, bytes)),
-            243 => Ok((Self::F64x2Div, bytes)),
-            244 => Ok((Self::F64x2Min, bytes)),
-            245 => Ok((Self::F64x2Max, bytes)),
-            246 => Ok((Self::F64x2Pmin, bytes)),
-            247 => Ok((Self::F64x2Pmax, bytes)),
-            248 => Ok((Self::I32x4TruncSatF32x4S, bytes)),
-            249 => Ok((Self::I32x4TruncSatF32x4U, bytes)),
-            250 => Ok((Self::F32x4ConvertI32x4S, bytes)),
-            251 => Ok((Self::F32x4ConvertI32x4U, bytes)),
-            252 => Ok((Self::I32x4TruncSatF64x2SZero, bytes)),
-            253 => Ok((Self::I32x4TruncSatF64x2UZero, bytes)),
-            254 => Ok((Self::F64x2ConvertLowI32x4S, bytes)),
-            255 => Ok((Self::F64x2ConvertLowI32x4U, bytes)),
-            94 => Ok((Self::F32x4DemoteF64x2Zero, bytes)),
-            95 => Ok((Self::F64x2PromoteLowF32x4, bytes)),
-            _ => Err(Error::VectorInstructionSubopcode(subop)),
-        }
-    }
-
-    fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
-        match self {
-            Self::V128Load(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(0)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load8x8S(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(1)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load8x8U(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(2)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load16x4S(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(3)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load16x4U(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(4)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load32x2S(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(5)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load32x2U(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(6)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load8Splat(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(7)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load16Splat(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(8)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load32Splat(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(9)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load64Splat(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(10)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load32Zero(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(92)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load64Zero(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(93)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Store(ma) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(11)?;
-                ma.write_into(wr)?;
-            }
-            Self::V128Load8Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(84)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Load16Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(85)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Load32Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(86)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Load64Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(87)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Store8Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(88)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Store16Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(89)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Store32Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(90)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Store64Lane(ma, li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(91)?;
-                ma.write_into(wr)?;
-                wr.write_u32(*li)?;
-            }
-            Self::V128Const(x) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(12)?;
-                wr.write_all(&x.to_le_bytes())?;
-            }
-            Self::I8x16Shuffle(lis) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(13)?;
-                for li in lis {
-                    wr.write_u32(*li)?;
-                }
-            }
-            Self::I8x16ExtractLaneS(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(21)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I8x16ExtractLaneU(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(22)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I8x16ReplaceLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(23)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I16x8ExtractLaneS(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(24)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I16x8ExtractLaneU(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(25)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I16x8ReplaceLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(26)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I32x4ExtractLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(27)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I32x4ReplaceLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(28)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I64x2ExtractLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(29)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I64x2ReplaceLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(30)?;
-                wr.write_u32(*li)?;
-            }
-            Self::F32x4ExtractLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(31)?;
-                wr.write_u32(*li)?;
-            }
-            Self::F32x4ReplaceLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(32)?;
-                wr.write_u32(*li)?;
-            }
-            Self::F64x2ExtractLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(33)?;
-                wr.write_u32(*li)?;
-            }
-            Self::F64x2ReplaceLane(li) => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(34)?;
-                wr.write_u32(*li)?;
-            }
-            Self::I8X16Swizzle => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(14)?;
-            }
-            Self::I8x16Splat => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(15)?;
-            }
-            Self::I16x8Splat => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(16)?;
-            }
-            Self::I32x4Splat => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(17)?;
-            }
-            Self::I64x2Splat => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(18)?;
-            }
-            Self::F32x4Splat => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(19)?;
-            }
-            Self::F64x2Splat => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(20)?;
-            }
-            Self::I8x16Eq => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(35)?;
-            }
-            Self::I8x16Ne => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(36)?;
-            }
-            Self::I8X16LtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(37)?;
-            }
-            Self::I8X16LtU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(38)?;
-            }
-            Self::I8X16GtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(39)?;
-            }
-            Self::I8X16GtU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(40)?;
-            }
-            Self::I8X16LeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(41)?;
-            }
-            Self::I8X16LeU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(42)?;
-            }
-            Self::I8X16GeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(43)?;
-            }
-            Self::I8X16GeU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(44)?;
-            }
-            Self::I16x8Eq => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(45)?;
-            }
-            Self::I16x8Ne => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(46)?;
-            }
-            Self::I16x8LtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(47)?;
-            }
-            Self::I16x8LtU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(48)?;
-            }
-            Self::I16x8GtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(49)?;
-            }
-            Self::I16x8GtU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(50)?;
-            }
-            Self::I16x8LeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(51)?;
-            }
-            Self::I16x8LeU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(52)?;
-            }
-            Self::I16x8GeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(53)?;
-            }
-            Self::I16x8GeU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(54)?;
-            }
-            Self::I32x4Eq => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(55)?;
-            }
-            Self::I32x4Ne => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(56)?;
-            }
-            Self::I32x4LtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(57)?;
-            }
-            Self::I32x4LtU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(58)?;
-            }
-            Self::I32x4GtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(59)?;
-            }
-            Self::I32x4GtU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(60)?;
-            }
-            Self::I32x4LeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(61)?;
-            }
-            Self::I32x4LeU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(62)?;
-            }
-            Self::I32x4GeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(63)?;
-            }
-            Self::I32x4GeU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(64)?;
-            }
-            Self::I64x2Eq => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(214)?;
-            }
-            Self::I64x2Ne => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(215)?;
-            }
-            Self::I64x2LtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(216)?;
-            }
-            Self::I64x2GtS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(217)?;
-            }
-            Self::I64x2LeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(218)?;
-            }
-            Self::I64x2GeS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(219)?;
-            }
-            Self::F32x4Eq => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(65)?;
-            }
-            Self::F32x4Ne => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(66)?;
-            }
-            Self::F32x4Lt => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(67)?;
-            }
-            Self::F32x4Gt => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(68)?;
-            }
-            Self::F32x4Le => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(69)?;
-            }
-            Self::F32x4Ge => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(70)?;
-            }
-            Self::F64x2Eq => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(71)?;
-            }
-            Self::F64x2Ne => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(72)?;
-            }
-            Self::F64x2Lt => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(73)?;
-            }
-            Self::F64x2Gt => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(74)?;
-            }
-            Self::F64x2Le => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(75)?;
-            }
-            Self::F64x2Ge => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(76)?;
-            }
-            Self::V128Not => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(77)?;
-            }
-            Self::V128And => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(78)?;
-            }
-            Self::V128AndNot => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(79)?;
-            }
-            Self::V128Or => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(80)?;
-            }
-            Self::V128Xor => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(81)?;
-            }
-            Self::V128Bitselect => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(82)?;
-            }
-            Self::V128AnyTrue => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(83)?;
-            }
-            Self::I8x16Abs => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(96)?;
-            }
-            Self::I8x16Neg => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(97)?;
-            }
-            Self::I8x16Popcnt => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(98)?;
-            }
-            Self::I8x16AllTrue => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(99)?;
-            }
-            Self::I8x16Bitmask => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(100)?;
-            }
-            Self::I8x16NarrowI16x8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(101)?;
-            }
-            Self::I8x16NarrowI16x8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(102)?;
-            }
-            Self::I8x16Shl => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(107)?;
-            }
-            Self::I8x16ShrS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(108)?;
-            }
-            Self::I8x16ShrU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(109)?;
-            }
-            Self::I8x16Add => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(110)?;
-            }
-            Self::I8x16AddSatS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(111)?;
-            }
-            Self::I8x16AddSatU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(112)?;
-            }
-            Self::I8x16Sub => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(113)?;
-            }
-            Self::I8x16SubSatS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(114)?;
-            }
-            Self::I8x16SubSatU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(115)?;
-            }
-            Self::I8x16MinS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(118)?;
-            }
-            Self::I8x16MinU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(119)?;
-            }
-            Self::I8x16MaxS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(120)?;
-            }
-            Self::I8x16MaxU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(121)?;
-            }
-            Self::I8x16AvgrU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(123)?;
-            }
-            Self::I16x8ExtAddPairwiseI8x16S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(124)?;
-            }
-            Self::I16x8ExtAddPairwiseI8x16U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(125)?;
-            }
-            Self::I16x8Abs => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(128)?;
-            }
-            Self::I16x8Neg => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(129)?;
-            }
-            Self::I16x8Q15MulrSatS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(130)?;
-            }
-            Self::I16x8AllTrue => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(131)?;
-            }
-            Self::I16x8Bitmask => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(132)?;
-            }
-            Self::I16x8NarrowI32x4S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(133)?;
-            }
-            Self::I16x8NarrowI32x4U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(134)?;
-            }
-            Self::I16x8ExtendLowI8X16S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(135)?;
-            }
-            Self::I16x8ExtendHighI8X16S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(136)?;
-            }
-            Self::I16x8ExtendLowI8X16U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(137)?;
-            }
-            Self::I16x8ExtendHighI8X16U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(138)?;
-            }
-            Self::I16x8Shl => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(139)?;
-            }
-            Self::I16x8ShrS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(140)?;
-            }
-            Self::I16x8ShrU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(141)?;
-            }
-            Self::I16x8Add => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(142)?;
-            }
-            Self::I16x8AddSatS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(143)?;
-            }
-            Self::I16x8AddSatU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(144)?;
-            }
-            Self::I16x8Sub => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(145)?;
-            }
-            Self::I16x8SubSatS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(146)?;
-            }
-            Self::I16x8SubSatU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(147)?;
-            }
-            Self::I16X8Mul => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(149)?;
-            }
-            Self::I16x8MinS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(150)?;
-            }
-            Self::I16x8MinU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(151)?;
-            }
-            Self::I16x8MaxS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(152)?;
-            }
-            Self::I16x8MaxU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(153)?;
-            }
-            Self::I16x8AvgrU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(155)?;
-            }
-            Self::I16x8ExtmulLowI8x16S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(156)?;
-            }
-            Self::I16x8ExtmulHighI8x16S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(157)?;
-            }
-            Self::I16x8ExtmulLowI8x16U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(158)?;
-            }
-            Self::I16x8ExtmulHighI8x16U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(159)?;
-            }
-            Self::I32x4ExtAddPairwiseI16x8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(126)?;
-            }
-            Self::I32x4ExtAddPairwiseI16x8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(127)?;
-            }
-            Self::I32x4Abs => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(160)?;
-            }
-            Self::I32x4Neg => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(161)?;
-            }
-            Self::I32x4AllTrue => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(163)?;
-            }
-            Self::I32x4Bitmask => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(164)?;
-            }
-            Self::I32x4ExtendLowI16X8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(167)?;
-            }
-            Self::I32x4ExtendHighI16X8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(168)?;
-            }
-            Self::I32x4ExtendLowI16X8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(169)?;
-            }
-            Self::I32x4ExtendHighI16X8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(170)?;
-            }
-            Self::I32x4Shl => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(171)?;
-            }
-            Self::I32x4ShrS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(172)?;
-            }
-            Self::I32x4ShrU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(173)?;
-            }
-            Self::I32x4Add => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(174)?;
-            }
-            Self::I32x4Sub => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(177)?;
-            }
-            Self::I32x4Mul => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(181)?;
-            }
-            Self::I32x4MinS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(182)?;
-            }
-            Self::I32x4MinU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(183)?;
-            }
-            Self::I32x4MaxS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(184)?;
-            }
-            Self::I32x4MaxU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(185)?;
-            }
-            Self::I32x4DotI16x8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(186)?;
-            }
-            Self::I32x4ExtmulLowI16x8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(188)?;
-            }
-            Self::I32x4ExtmulHighI16x8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(189)?;
-            }
-            Self::I32x4ExtmulLowI16x8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(190)?;
-            }
-            Self::I32x4ExtmulHighI16x8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(191)?;
-            }
-            Self::I64x2Abs => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(192)?;
-            }
-            Self::I64x2Neg => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(193)?;
-            }
-            Self::I64x2AllTrue => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(195)?;
-            }
-            Self::I64x2Bitmask => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(196)?;
-            }
-            Self::I64x2ExtendLowI16X8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(199)?;
-            }
-            Self::I64x2ExtendHighI16X8S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(200)?;
-            }
-            Self::I64x2ExtendLowI16X8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(201)?;
-            }
-            Self::I64x2ExtendHighI16X8U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(202)?;
-            }
-            Self::I64x2Shl => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(203)?;
-            }
-            Self::I64x2ShrS => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(204)?;
-            }
-            Self::I64x2ShrU => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(205)?;
-            }
-            Self::I64x2Add => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(206)?;
-            }
-            Self::I64x2Sub => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(209)?;
-            }
-            Self::I64x2Mul => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(213)?;
-            }
-            Self::I64x2ExtmulLowI32x4S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(220)?;
-            }
-            Self::I64x2ExtmulHighI32x4S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(221)?;
-            }
-            Self::I64x2ExtmulLowI32x4U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(222)?;
-            }
-            Self::I64x2ExtmulHighI32x4U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(223)?;
-            }
-            Self::F32x4Ceil => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(103)?;
-            }
-            Self::F32x4Floor => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(104)?;
-            }
-            Self::F32x4Trunc => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(105)?;
-            }
-            Self::F32x4Nearest => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(106)?;
-            }
-            Self::F32x4Abs => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(224)?;
-            }
-            Self::F32x4Neg => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(225)?;
-            }
-            Self::F32x4Sqrt => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(227)?;
-            }
-            Self::F32x4Add => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(228)?;
-            }
-            Self::F32x4Sub => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(229)?;
-            }
-            Self::F32x4Mul => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(230)?;
-            }
-            Self::F32x4Div => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(231)?;
-            }
-            Self::F32x4Min => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(232)?;
-            }
-            Self::F32x4Max => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(233)?;
-            }
-            Self::F32x4Pmin => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(234)?;
-            }
-            Self::F32x4Pmax => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(235)?;
-            }
-            Self::F64x2Ceil => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(116)?;
-            }
-            Self::F64x2Floor => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(117)?;
-            }
-            Self::F64x2Trunc => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(122)?;
-            }
-            Self::F64x2Nearest => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(148)?;
-            }
-            Self::F64x2Abs => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(236)?;
-            }
-            Self::F64x2Neg => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(237)?;
-            }
-            Self::F64x2Sqrt => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(239)?;
-            }
-            Self::F64x2Add => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(240)?;
-            }
-            Self::F64x2Sub => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(241)?;
-            }
-            Self::F64x2Mul => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(242)?;
-            }
-            Self::F64x2Div => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(243)?;
-            }
-            Self::F64x2Min => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(244)?;
-            }
-            Self::F64x2Max => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(245)?;
-            }
-            Self::F64x2Pmin => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(246)?;
-            }
-            Self::F64x2Pmax => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(247)?;
-            }
-            Self::I32x4TruncSatF32x4S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(248)?;
-            }
-            Self::I32x4TruncSatF32x4U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(249)?;
-            }
-            Self::F32x4ConvertI32x4S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(250)?;
-            }
-            Self::F32x4ConvertI32x4U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(251)?;
-            }
-            Self::I32x4TruncSatF64x2SZero => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(252)?;
-            }
-            Self::I32x4TruncSatF64x2UZero => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(253)?;
-            }
-            Self::F64x2ConvertLowI32x4S => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(254)?;
-            }
-            Self::F64x2ConvertLowI32x4U => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(255)?;
-            }
-            Self::F32x4DemoteF64x2Zero => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(94)?;
-            }
-            Self::F64x2PromoteLowF32x4 => {
-                wr.write_all(&[0xFD])?;
-                wr.write_u32(95)?;
-            }
-        };
         Ok(())
     }
 }

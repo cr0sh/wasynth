@@ -18,6 +18,14 @@ impl SynthElementSection {
 
         Ok(())
     }
+
+    pub fn elements(&self) -> &[SynthElem] {
+        self.elements.as_ref()
+    }
+
+    pub fn elements_mut(&mut self) -> &mut Vec<SynthElem> {
+        &mut self.elements
+    }
 }
 
 #[derive(Clone, Debug)]

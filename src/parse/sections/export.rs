@@ -47,7 +47,7 @@ impl<'bytes> Export<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<(Self, &'bytes [u8]), Error> {
         let (name, bytes) = bytes.advance_name()?;
         let (&[discriminator], bytes) = bytes.advance()?;
-        let (idx, bytes) = bytes.advance_s32()?;
+        let (idx, bytes) = bytes.advance_u32()?;
         let desc = match discriminator {
             0x00 => ExportDescription::Func(idx),
             0x01 => ExportDescription::Table(idx),
@@ -74,8 +74,8 @@ impl<'bytes> Export<'bytes> {
 
 #[derive(Clone, Debug)]
 pub enum ExportDescription {
-    Func(i32),
-    Table(i32),
-    Mem(i32),
-    Global(i32),
+    Func(u32),
+    Table(u32),
+    Mem(u32),
+    Global(u32),
 }

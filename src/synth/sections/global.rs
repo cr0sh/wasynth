@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::WriteExt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthGlobalSection {
     pub(crate) bytes: Vec<u8>,
 }

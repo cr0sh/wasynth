@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::WriteExt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthFunctionSection {
     pub(crate) type_indices: Vec<u32>,
 }

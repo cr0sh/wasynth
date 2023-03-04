@@ -5,7 +5,7 @@ use crate::{
     WriteExt,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthImportSection {
     pub(crate) imports: Vec<SynthImport>,
 }

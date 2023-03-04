@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::{instructions::Expression, wasm_types::ReferenceType, WriteExt};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthElementSection {
     pub(crate) elements: Vec<SynthElem>,
 }

@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::{wasm_types::FuncType, WriteExt};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthTypeSection {
     pub(crate) types: Vec<FuncType>,
 }

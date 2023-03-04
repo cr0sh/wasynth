@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::{instructions::Expression, WriteExt};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthDataSection {
     pub(crate) all_data: Vec<SynthData>,
 }

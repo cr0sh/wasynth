@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::{wasm_types::TableType, WriteExt};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthTableSection {
     pub(crate) tables: Vec<TableType>,
 }

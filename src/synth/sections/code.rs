@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::{instructions::Expression, wasm_types::ValueType, WriteExt};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SynthCodeSection {
     pub(crate) codes: Vec<SynthCode>,
 }

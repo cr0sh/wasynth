@@ -61,6 +61,8 @@ pub enum Error {
     DataSectionTag(u32),
     #[error("invalid elemkind discriminator {0}")]
     ElemKind(u8),
+    #[error("invalid export description tag {0}")]
+    ExportDescription(u8),
     // TODO: separate error type among parse/synth/instrument codes
     #[error("I/O error")]
     Io(#[source] io::Error),

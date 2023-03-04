@@ -3223,7 +3223,7 @@ impl Instruction {
 }
 
 #[derive(Clone, Debug)]
-pub struct Expression(Vec<Instruction>);
+pub struct Expression(pub(crate) Vec<Instruction>);
 
 impl Expression {
     pub(crate) fn from_bytes(bytes: &[u8]) -> Result<(Self, &[u8]), Error> {

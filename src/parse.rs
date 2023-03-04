@@ -239,9 +239,17 @@ impl<'bytes> Module<'bytes> {
                     }
                 }
                 Section::Global(_) => (),
-                Section::Export(_) => (),
+                Section::Export(s) => {
+                    for export in s.exports()? {
+                        export?;
+                    }
+                }
                 Section::Start(_) => (),
-                Section::Element(_) => (),
+                Section::Element(s) => {
+                    for element in s.elements()? {
+                        element?;
+                    }
+                }
                 Section::Code(s) => {
                     for code in s.codes()? {
                         code?;

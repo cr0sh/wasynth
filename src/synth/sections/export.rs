@@ -18,6 +18,14 @@ impl SynthExportSection {
 
         Ok(())
     }
+
+    pub fn exports(&self) -> &[SynthExport] {
+        self.exports.as_ref()
+    }
+
+    pub fn exports_mut(&mut self) -> &mut Vec<SynthExport> {
+        &mut self.exports
+    }
 }
 
 #[derive(Clone, Debug)]

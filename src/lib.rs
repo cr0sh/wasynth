@@ -353,7 +353,7 @@ pub trait WriteExt: Write {
 
 impl<T: Write> WriteExt for T {}
 
-#[cfg(all(test, not(feature = "bytes_trace")))]
+#[cfg(test)]
 mod tests {
     use std::io::Write;
 

@@ -239,7 +239,11 @@ impl<'bytes> Module<'bytes> {
                         mem?;
                     }
                 }
-                Section::Global(_) => (),
+                Section::Global(s) => {
+                    for global in s.globals()? {
+                        global?;
+                    }
+                }
                 Section::Export(s) => {
                     for export in s.exports()? {
                         export?;

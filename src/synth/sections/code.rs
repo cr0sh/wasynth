@@ -39,6 +39,10 @@ impl SynthCode {
         &self.func_expr
     }
 
+    pub fn func_expr_mut(&mut self) -> &mut Expression {
+        &mut self.func_expr
+    }
+
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         let mut buf = Vec::new();
         let mut locals = Vec::new();

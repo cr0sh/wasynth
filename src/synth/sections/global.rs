@@ -18,6 +18,14 @@ impl SynthGlobalSection {
 
         Ok(())
     }
+
+    pub fn globals(&self) -> &[SynthGlobal] {
+        self.globals.as_ref()
+    }
+
+    pub fn globals_mut(&mut self) -> &mut Vec<SynthGlobal> {
+        &mut self.globals
+    }
 }
 
 #[derive(Clone, Debug)]

@@ -9,7 +9,8 @@ use crate::{WASM_MAGIC, WASM_VERSION};
 use self::sections::{
     SynthCodeSection, SynthCustomSection, SynthDataCountSection, SynthDataSection,
     SynthElementSection, SynthExportSection, SynthFunctionSection, SynthGlobalSection,
-    SynthImportSection, SynthMemorySection, SynthStartSection, SynthTableSection, SynthTypeSection,
+    SynthImportSection, SynthMemorySection, SynthNameSection, SynthStartSection, SynthTableSection,
+    SynthTypeSection,
 };
 
 pub mod sections;
@@ -29,6 +30,7 @@ pub struct SynthModule {
     pub(crate) data_section: Option<SynthDataSection>,
     pub(crate) data_count_section: Option<SynthDataCountSection>,
     pub(crate) custom_sections: Vec<SynthCustomSection>,
+    pub(crate) name_section: Option<SynthNameSection>,
 }
 
 impl SynthModule {

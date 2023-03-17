@@ -63,6 +63,10 @@ pub enum Error {
     ElemKind(u8),
     #[error("invalid export description tag {0}")]
     ExportDescription(u8),
+    #[error("invalid name section subsection id {0}")]
+    NameSectionSubsectionId(u8),
+    #[error("incorrect subsection")]
+    IncorrectSubsection,
     // TODO: separate error type among parse/synth/instrument codes
     #[error("I/O error")]
     Io(#[source] io::Error),
@@ -70,6 +74,10 @@ pub enum Error {
     MissingSection(&'static str),
     #[error("duplicate {0} section")]
     DuplicateSection(&'static str),
+    #[error("missing name section {0} subsection")]
+    MissingNameSectionSubsection(&'static str),
+    #[error("duplicate name section {0} subsection")]
+    DuplicateNameSectionSubsection(&'static str),
 }
 
 /// Convenince trait for reading bytes.

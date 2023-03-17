@@ -8,11 +8,12 @@ mod function;
 mod global;
 mod import;
 mod memory;
+mod name;
 mod start;
 mod table;
 mod r#type;
 
 pub use {
     code::*, custom::*, data::*, data_count::*, element::*, export::*, function::*, global::*,
-    import::*, memory::*, r#type::*, start::*, table::*,
+    import::*, memory::*, name::*, r#type::*, start::*, table::*,
 };

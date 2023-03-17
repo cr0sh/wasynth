@@ -14,6 +14,8 @@ use sections::{
     TypeSection,
 };
 
+use self::sections::NameSection;
+
 /// A parsed WebAssembly module.
 #[derive(Debug, Clone)]
 pub struct Module<'bytes> {
@@ -201,6 +203,16 @@ impl<'bytes> Module<'bytes> {
                 })
                 .map(CustomSection::into_synth)
                 .collect(),
+            name_section: self
+                .sections
+                .iter()
+                .filter_map(|x| match x {
+                    Section::Name(x) => Some(*x),
+                    _ => None,
+                })
+                .extract_element("name")?
+                .map(|x| x.into_synth())
+                .transpose()?,
         })
     }
 
@@ -266,6 +278,24 @@ impl<'bytes> Module<'bytes> {
                     }
                 }
                 Section::DataCount(_) => (),
+                Section::Name(s) => {
+                    for ss in s.subsections()? {
+                        let ss = ss?;
+                        match &ss {
+                            sections::NameSubsection::ModuleName(_) => (),
+                            sections::NameSubsection::FunctionNames(_) => {
+                                for na in ss.name_assocs()? {
+                                    na?;
+                                }
+                            }
+                            sections::NameSubsection::LocalNames(_) => {
+                                for ina in ss.indirect_name_assocs()? {
+                                    ina?;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         trace!("validation end");
@@ -288,6 +318,7 @@ pub enum Section<'bytes> {
     Code(CodeSection<'bytes>),
     Data(DataSection<'bytes>),
     DataCount(DataCountSection),
+    Name(NameSection<'bytes>),
 }
 
 impl<'bytes> Section<'bytes> {
@@ -297,7 +328,14 @@ impl<'bytes> Section<'bytes> {
         let (bytes, rest) = bytes.advance_slice(len.try_into().expect("section size overflow"))?;
 
         let section = match id {
-            0 => Self::Custom(CustomSection::from_bytes(bytes)?),
+            0 => {
+                let custom = CustomSection::from_bytes(bytes)?;
+                if custom.name() == "name" {
+                    Self::Name(NameSection::from_bytes(bytes)?)
+                } else {
+                    Self::Custom(custom)
+                }
+            }
             1 => Self::Type(TypeSection::from_bytes(bytes)?),
             2 => Self::Import(ImportSection::from_bytes(bytes)?),
             3 => Self::Function(FunctionSection::from_bytes(bytes)?),
@@ -319,7 +357,7 @@ impl<'bytes> Section<'bytes> {
     /// Returns the ID of the section.
     pub fn id(self) -> u8 {
         match self {
-            Self::Custom(..) => 0,
+            Self::Custom(..) | Self::Name(..) => 0,
             Self::Type(..) => 1,
             Self::Import(..) => 2,
             Self::Function(..) => 3,

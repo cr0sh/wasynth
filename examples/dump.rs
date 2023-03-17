@@ -63,6 +63,9 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             wasynth::parse::Section::DataCount(datacountsec) => {
                 println!("data count: {}", datacountsec.data_count())
             }
+            wasynth::parse::Section::Name(namesec) => {
+                println!("{:?}", namesec)
+            }
         }
     }
 

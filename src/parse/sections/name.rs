@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{
     synth::sections::{SynthIndirectNameAssoc, SynthNameAssoc, SynthNameSection},
-    Bytes, Error, VectorIterator,
+    Bytes, Error,
 };
 
 #[derive(Clone, Copy)]
@@ -93,7 +93,7 @@ impl<'bytes> NameSubsection<'bytes> {
         let bytes = &bytes[..size];
         match id {
             0 => {
-                let (name, bytes) = bytes.advance_name()?;
+                let (name, _bytes) = bytes.advance_name()?;
                 Ok((Self::ModuleName(name), rest))
             }
             1 => Ok((Self::FunctionNames(bytes), rest)),
@@ -107,7 +107,7 @@ impl<'bytes> NameSubsection<'bytes> {
     ) -> Result<impl Iterator<Item = Result<NameAssoc<'bytes>, Error>> + '_, Error> {
         match self {
             NameSubsection::FunctionNames(x) => x.advance_vector(NameAssoc::from_bytes),
-            _ => return Err(Error::IncorrectSubsection),
+            _ => Err(Error::IncorrectSubsection),
         }
     }
 
@@ -116,7 +116,7 @@ impl<'bytes> NameSubsection<'bytes> {
     ) -> Result<impl Iterator<Item = Result<IndirectNameAssoc<'bytes>, Error>> + '_, Error> {
         match self {
             NameSubsection::LocalNames(x) => x.advance_vector(IndirectNameAssoc::from_bytes),
-            _ => return Err(Error::IncorrectSubsection),
+            _ => Err(Error::IncorrectSubsection),
         }
     }
 }

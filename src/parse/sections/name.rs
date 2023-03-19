@@ -12,6 +12,9 @@ pub struct NameSection<'bytes> {
 
 impl<'bytes> NameSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
+        dbg!(bytes);
+        let (name, bytes) = bytes.advance_name()?;
+        assert_eq!(name, "name");
         Ok(Self { bytes })
     }
 
@@ -32,7 +35,7 @@ impl<'bytes> NameSection<'bytes> {
             }
         }
 
-        let sections = self.subsections()?.collect::<Result<Vec<_>, _>>()?;
+        let sections = self.subsections()?.collect::<Vec<_>>();
         let module_name = sections
             .iter()
             .filter_map(|x| match x {
@@ -64,10 +67,16 @@ impl<'bytes> NameSection<'bytes> {
         })
     }
 
-    pub fn subsections(
-        &self,
-    ) -> Result<impl Iterator<Item = Result<NameSubsection<'bytes>, Error>> + '_, Error> {
-        self.bytes.advance_vector(NameSubsection::from_bytes)
+    pub fn subsections(&self) -> Result<impl Iterator<Item = NameSubsection<'bytes>> + '_, Error> {
+        let mut subsections = Vec::new();
+        let mut bytes = self.bytes;
+        while !bytes.is_empty() {
+            let (s, bytes_) = NameSubsection::from_bytes(bytes)?;
+            bytes = bytes_;
+            subsections.push(s);
+        }
+
+        Ok(subsections.into_iter())
     }
 }
 

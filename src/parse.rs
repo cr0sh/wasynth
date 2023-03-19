@@ -280,7 +280,6 @@ impl<'bytes> Module<'bytes> {
                 Section::DataCount(_) => (),
                 Section::Name(s) => {
                     for ss in s.subsections()? {
-                        let ss = ss?;
                         match &ss {
                             sections::NameSubsection::ModuleName(_) => (),
                             sections::NameSubsection::FunctionNames(_) => {

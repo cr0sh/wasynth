@@ -122,8 +122,8 @@ impl<'bytes> NameSubsection<'bytes> {
 }
 
 pub struct NameAssoc<'bytes> {
-    idx: u32,
-    name: &'bytes str,
+    pub(crate) idx: u32,
+    pub(crate) name: &'bytes str,
 }
 
 impl<'bytes> NameAssoc<'bytes> {
@@ -142,8 +142,8 @@ impl<'bytes> NameAssoc<'bytes> {
 }
 
 pub struct IndirectNameAssoc<'bytes> {
-    idx: u32,
-    name_map: Vec<NameAssoc<'bytes>>,
+    pub(crate) idx: u32,
+    pub(crate) name_map: Vec<NameAssoc<'bytes>>,
 }
 
 impl<'bytes> IndirectNameAssoc<'bytes> {

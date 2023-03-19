@@ -43,10 +43,7 @@ impl<'bytes> NameSection<'bytes> {
 
         let function_names = sections
             .iter()
-            .filter_map(|x| match x {
-                NameSubsection::FunctionNames(_) => Some(x),
-                _ => None,
-            })
+            .filter(|x| matches!(x, NameSubsection::FunctionNames(_)))
             .extract_element("function names")?
             .name_assocs()?
             .map(|x| x.map(NameAssoc::into_synth))
@@ -54,10 +51,7 @@ impl<'bytes> NameSection<'bytes> {
 
         let local_names = sections
             .iter()
-            .filter_map(|x| match x {
-                NameSubsection::LocalNames(_) => Some(x),
-                _ => None,
-            })
+            .filter(|x| matches!(x, NameSubsection::LocalNames(_)))
             .extract_element("local names")?
             .indirect_name_assocs()?
             .map(|x| x.map(IndirectNameAssoc::into_synth))

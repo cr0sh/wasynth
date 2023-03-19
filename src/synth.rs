@@ -79,6 +79,10 @@ impl SynthModule {
             section.write_into(&mut wr)?;
         }
 
+        if let Some(sec) = &self.name_section {
+            sec.write_into(wr)?;
+        }
+
         Ok(())
     }
 }

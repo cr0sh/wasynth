@@ -20,14 +20,15 @@ impl<'bytes> NameSection<'bytes> {
 
     pub(crate) fn into_synth(self) -> Result<SynthNameSection, Error> {
         trait IteratorExt: Iterator {
-            fn extract_element(self, section_name: &'static str) -> Result<Self::Item, Error>;
+            fn extract_element(
+                self,
+                section_name: &'static str,
+            ) -> Result<Option<Self::Item>, Error>;
         }
 
         impl<T, I: Iterator<Item = T>> IteratorExt for I {
-            fn extract_element(mut self, section_name: &'static str) -> Result<T, Error> {
-                let first = self
-                    .next()
-                    .ok_or(Error::MissingNameSectionSubsection(section_name))?;
+            fn extract_element(mut self, section_name: &'static str) -> Result<Option<T>, Error> {
+                let first = self.next();
                 if self.next().is_some() {
                     return Err(Error::DuplicateNameSectionSubsection(section_name));
                 }
@@ -48,73 +49,101 @@ impl<'bytes> NameSection<'bytes> {
             .iter()
             .filter(|x| matches!(x, NameSubsection::FunctionNames(_)))
             .extract_element("function names")?
-            .name_assocs()?
-            .map(|x| x.map(NameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .map(|x| {
+                x.name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(NameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let local_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::LocalNames(_)))
-            .extract_element("local names")?
-            .indirect_name_assocs()?
-            .map(|x| x.map(IndirectNameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .extract_element("function names")?
+            .map(|x| {
+                x.indirect_name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(IndirectNameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let label_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::LabelNames(_)))
-            .extract_element("local names")?
-            .indirect_name_assocs()?
-            .map(|x| x.map(IndirectNameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .extract_element("function names")?
+            .map(|x| {
+                x.indirect_name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(IndirectNameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let type_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::TypeNames(_)))
-            .extract_element("local names")?
-            .name_assocs()?
-            .map(|x| x.map(NameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .extract_element("function names")?
+            .map(|x| {
+                x.name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(NameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let table_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::TableNames(_)))
-            .extract_element("local names")?
-            .name_assocs()?
-            .map(|x| x.map(NameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .extract_element("function names")?
+            .map(|x| {
+                x.name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(NameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let memory_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::MemoryNames(_)))
-            .extract_element("local names")?
-            .name_assocs()?
-            .map(|x| x.map(NameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .extract_element("function names")?
+            .map(|x| {
+                x.name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(NameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let global_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::GlobalNames(_)))
-            .extract_element("local names")?
-            .name_assocs()?
-            .map(|x| x.map(NameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .extract_element("function names")?
+            .map(|x| {
+                x.name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(NameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let element_segment_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::ElementSegmentNames(_)))
-            .extract_element("local names")?
-            .name_assocs()?
-            .map(|x| x.map(NameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
-
+            .extract_element("function names")?
+            .map(|x| {
+                x.name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(NameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
         let data_segment_names = sections
             .iter()
             .filter(|x| matches!(x, NameSubsection::DataSegmentNames(_)))
-            .extract_element("local names")?
-            .name_assocs()?
-            .map(|x| x.map(NameAssoc::into_synth))
-            .collect::<Result<Vec<_>, _>>()?;
+            .extract_element("function names")?
+            .map(|x| {
+                x.name_assocs()
+                    .unwrap()
+                    .map(|x| x.map(NameAssoc::into_synth))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?;
 
         Ok(SynthNameSection {
             module_name,

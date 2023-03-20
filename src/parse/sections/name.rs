@@ -12,7 +12,6 @@ pub struct NameSection<'bytes> {
 
 impl<'bytes> NameSection<'bytes> {
     pub(crate) fn from_bytes(bytes: &'bytes [u8]) -> Result<Self, Error> {
-        dbg!(bytes);
         let (name, bytes) = bytes.advance_name()?;
         assert_eq!(name, "name");
         Ok(Self { bytes })

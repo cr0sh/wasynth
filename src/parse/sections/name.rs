@@ -60,10 +60,73 @@ impl<'bytes> NameSection<'bytes> {
             .map(|x| x.map(IndirectNameAssoc::into_synth))
             .collect::<Result<Vec<_>, _>>()?;
 
+        let label_names = sections
+            .iter()
+            .filter(|x| matches!(x, NameSubsection::LabelNames(_)))
+            .extract_element("local names")?
+            .indirect_name_assocs()?
+            .map(|x| x.map(IndirectNameAssoc::into_synth))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let type_names = sections
+            .iter()
+            .filter(|x| matches!(x, NameSubsection::TypeNames(_)))
+            .extract_element("local names")?
+            .name_assocs()?
+            .map(|x| x.map(NameAssoc::into_synth))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let table_names = sections
+            .iter()
+            .filter(|x| matches!(x, NameSubsection::TableNames(_)))
+            .extract_element("local names")?
+            .name_assocs()?
+            .map(|x| x.map(NameAssoc::into_synth))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let memory_names = sections
+            .iter()
+            .filter(|x| matches!(x, NameSubsection::MemoryNames(_)))
+            .extract_element("local names")?
+            .name_assocs()?
+            .map(|x| x.map(NameAssoc::into_synth))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let global_names = sections
+            .iter()
+            .filter(|x| matches!(x, NameSubsection::GlobalNames(_)))
+            .extract_element("local names")?
+            .name_assocs()?
+            .map(|x| x.map(NameAssoc::into_synth))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let element_segment_names = sections
+            .iter()
+            .filter(|x| matches!(x, NameSubsection::ElementSegmentNames(_)))
+            .extract_element("local names")?
+            .name_assocs()?
+            .map(|x| x.map(NameAssoc::into_synth))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let data_segment_names = sections
+            .iter()
+            .filter(|x| matches!(x, NameSubsection::DataSegmentNames(_)))
+            .extract_element("local names")?
+            .name_assocs()?
+            .map(|x| x.map(NameAssoc::into_synth))
+            .collect::<Result<Vec<_>, _>>()?;
+
         Ok(SynthNameSection {
             module_name,
             function_names,
             local_names,
+            label_names,
+            type_names,
+            table_names,
+            memory_names,
+            global_names,
+            element_segment_names,
+            data_segment_names,
         })
     }
 
@@ -91,6 +154,13 @@ pub enum NameSubsection<'bytes> {
     ModuleName(&'bytes str),
     FunctionNames(&'bytes [u8]),
     LocalNames(&'bytes [u8]),
+    LabelNames(&'bytes [u8]),
+    TypeNames(&'bytes [u8]),
+    TableNames(&'bytes [u8]),
+    MemoryNames(&'bytes [u8]),
+    GlobalNames(&'bytes [u8]),
+    ElementSegmentNames(&'bytes [u8]),
+    DataSegmentNames(&'bytes [u8]),
 }
 
 impl<'bytes> NameSubsection<'bytes> {
@@ -107,6 +177,13 @@ impl<'bytes> NameSubsection<'bytes> {
             }
             1 => Ok((Self::FunctionNames(bytes), rest)),
             2 => Ok((Self::LocalNames(bytes), rest)),
+            3 => Ok((Self::LabelNames(bytes), rest)),
+            4 => Ok((Self::TypeNames(bytes), rest)),
+            5 => Ok((Self::TableNames(bytes), rest)),
+            6 => Ok((Self::MemoryNames(bytes), rest)),
+            7 => Ok((Self::GlobalNames(bytes), rest)),
+            8 => Ok((Self::ElementSegmentNames(bytes), rest)),
+            9 => Ok((Self::DataSegmentNames(bytes), rest)),
             other => Err(Error::NameSectionSubsectionId(other)),
         }
     }
@@ -115,7 +192,13 @@ impl<'bytes> NameSubsection<'bytes> {
         &self,
     ) -> Result<impl Iterator<Item = Result<NameAssoc<'bytes>, Error>> + '_, Error> {
         match self {
-            NameSubsection::FunctionNames(x) => x.advance_vector(NameAssoc::from_bytes),
+            NameSubsection::FunctionNames(x)
+            | NameSubsection::TypeNames(x)
+            | NameSubsection::TableNames(x)
+            | NameSubsection::MemoryNames(x)
+            | NameSubsection::GlobalNames(x)
+            | NameSubsection::ElementSegmentNames(x)
+            | NameSubsection::DataSegmentNames(x) => x.advance_vector(NameAssoc::from_bytes),
             _ => Err(Error::IncorrectSubsection),
         }
     }
@@ -124,7 +207,9 @@ impl<'bytes> NameSubsection<'bytes> {
         &self,
     ) -> Result<impl Iterator<Item = Result<IndirectNameAssoc<'bytes>, Error>> + '_, Error> {
         match self {
-            NameSubsection::LocalNames(x) => x.advance_vector(IndirectNameAssoc::from_bytes),
+            NameSubsection::LocalNames(x) | NameSubsection::LabelNames(x) => {
+                x.advance_vector(IndirectNameAssoc::from_bytes)
+            }
             _ => Err(Error::IncorrectSubsection),
         }
     }

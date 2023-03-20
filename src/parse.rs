@@ -292,6 +292,41 @@ impl<'bytes> Module<'bytes> {
                                     ina?;
                                 }
                             }
+                            sections::NameSubsection::LabelNames(_) => {
+                                for ina in ss.indirect_name_assocs()? {
+                                    ina?;
+                                }
+                            }
+                            sections::NameSubsection::TypeNames(_) => {
+                                for na in ss.name_assocs()? {
+                                    na?;
+                                }
+                            }
+                            sections::NameSubsection::TableNames(_) => {
+                                for na in ss.name_assocs()? {
+                                    na?;
+                                }
+                            }
+                            sections::NameSubsection::MemoryNames(_) => {
+                                for na in ss.name_assocs()? {
+                                    na?;
+                                }
+                            }
+                            sections::NameSubsection::GlobalNames(_) => {
+                                for na in ss.name_assocs()? {
+                                    na?;
+                                }
+                            }
+                            sections::NameSubsection::ElementSegmentNames(_) => {
+                                for na in ss.name_assocs()? {
+                                    na?;
+                                }
+                            }
+                            sections::NameSubsection::DataSegmentNames(_) => {
+                                for na in ss.name_assocs()? {
+                                    na?;
+                                }
+                            }
                         }
                     }
                 }

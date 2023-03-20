@@ -7,6 +7,13 @@ pub struct SynthNameSection {
     pub(crate) module_name: String,
     pub(crate) function_names: Vec<SynthNameAssoc>,
     pub(crate) local_names: Vec<SynthIndirectNameAssoc>,
+    pub(crate) label_names: Vec<SynthIndirectNameAssoc>,
+    pub(crate) type_names: Vec<SynthNameAssoc>,
+    pub(crate) table_names: Vec<SynthNameAssoc>,
+    pub(crate) memory_names: Vec<SynthNameAssoc>,
+    pub(crate) global_names: Vec<SynthNameAssoc>,
+    pub(crate) element_segment_names: Vec<SynthNameAssoc>,
+    pub(crate) data_segment_names: Vec<SynthNameAssoc>,
 }
 
 impl SynthNameSection {
@@ -57,6 +64,62 @@ impl SynthNameSection {
 
     pub fn local_names_mut(&mut self) -> &mut Vec<SynthIndirectNameAssoc> {
         &mut self.local_names
+    }
+
+    pub fn label_names(&self) -> &[SynthIndirectNameAssoc] {
+        self.label_names.as_ref()
+    }
+
+    pub fn label_names_mut(&mut self) -> &mut Vec<SynthIndirectNameAssoc> {
+        &mut self.label_names
+    }
+
+    pub fn type_names(&self) -> &[SynthNameAssoc] {
+        self.type_names.as_ref()
+    }
+
+    pub fn type_names_mut(&mut self) -> &mut Vec<SynthNameAssoc> {
+        &mut self.type_names
+    }
+
+    pub fn table_names(&self) -> &[SynthNameAssoc] {
+        self.table_names.as_ref()
+    }
+
+    pub fn table_names_mut(&mut self) -> &mut Vec<SynthNameAssoc> {
+        &mut self.table_names
+    }
+
+    pub fn memory_names(&self) -> &[SynthNameAssoc] {
+        self.memory_names.as_ref()
+    }
+
+    pub fn memory_names_mut(&mut self) -> &mut Vec<SynthNameAssoc> {
+        &mut self.memory_names
+    }
+
+    pub fn global_names(&self) -> &[SynthNameAssoc] {
+        self.global_names.as_ref()
+    }
+
+    pub fn global_names_mut(&mut self) -> &mut Vec<SynthNameAssoc> {
+        &mut self.global_names
+    }
+
+    pub fn element_segment_names(&self) -> &[SynthNameAssoc] {
+        self.element_segment_names.as_ref()
+    }
+
+    pub fn element_segment_names_mut(&mut self) -> &mut Vec<SynthNameAssoc> {
+        &mut self.element_segment_names
+    }
+
+    pub fn data_segment_names(&self) -> &[SynthNameAssoc] {
+        self.data_segment_names.as_ref()
+    }
+
+    pub fn data_segment_names_mut(&mut self) -> &mut Vec<SynthNameAssoc> {
+        &mut self.data_segment_names
     }
 }
 

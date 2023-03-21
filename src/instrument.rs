@@ -32,7 +32,7 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
         .types;
     let import_tyidx = tysec.len();
     tysec.push(FuncType {
-        param: ResultType(vec![ValueType::I32, ValueType::I32]),
+        param: ResultType(vec![ValueType::I32]),
         result: ResultType(vec![]),
     });
 

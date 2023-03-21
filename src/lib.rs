@@ -1,4 +1,5 @@
 pub mod instructions;
+pub mod instrument;
 pub mod parse;
 pub mod synth;
 pub mod wasm_types;

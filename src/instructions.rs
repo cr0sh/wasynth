@@ -3220,6 +3220,34 @@ impl Instruction {
         }
         Ok(())
     }
+
+    pub(crate) fn visit_func_indices(&mut self, mut func: impl FnMut(&mut u32) + Copy) {
+        match self {
+            Self::Block(_, instrs) => {
+                for instr in instrs {
+                    instr.visit_func_indices(func);
+                }
+            }
+            Self::Loop(_, instrs) => {
+                for instr in instrs {
+                    instr.visit_func_indices(func);
+                }
+            }
+            Self::If(_, instrs, elseinstrs) => {
+                for instr in instrs {
+                    instr.visit_func_indices(func);
+                }
+                if let Some(elseinstrs) = elseinstrs {
+                    for instr in elseinstrs {
+                        instr.visit_func_indices(func);
+                    }
+                }
+            }
+            Self::Call(x) => func(x),
+            Self::RefFunc(x) => func(x),
+            _ => (),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -3235,6 +3263,12 @@ impl Expression {
 
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         Instruction::write_slice_into(&self.0, Some(0x0B), wr)
+    }
+
+    pub(crate) fn visit_func_indices(&mut self, func: impl FnMut(&mut u32) + Copy) {
+        for instruction in &mut self.0 {
+            instruction.visit_func_indices(func);
+        }
     }
 
     pub fn instructions(&self) -> &[Instruction] {

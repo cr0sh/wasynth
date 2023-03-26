@@ -1,6 +1,6 @@
 use std::sync::Once;
 
-use wasynth::parse::Module;
+use wasynth::{instrument::install_all, parse::Module};
 
 fn init_logger() {
     static ONCE: Once = Once::new();
@@ -40,6 +40,24 @@ fn test_synth(module: &Module) {
     log::trace!(
         "wat: {}",
         wasmprinter::print_bytes(&buf).expect("cannot parse synthesized wasm module")
+    );
+    wasmparser::validate(&buf).expect("wasmparser validation fail");
+}
+
+fn test_instrument(module: &Module) {
+    log::trace!("test_instrument");
+    let mut buf = Vec::new();
+    let mut module = module.clone().into_synth().expect("into_synth fail");
+    install_all(&mut module).expect("install_all");
+    module.write_into(&mut buf).expect("write_into fail");
+
+    log::trace!("self-validation");
+    let module2 = Module::from_binary(&buf).expect("self-validation fail");
+    module2.validate().expect("self-validation fail");
+    log::trace!("self-validation end");
+    log::trace!(
+        "wat: {}",
+        wasmprinter::print_bytes(&buf).expect("cannot parse instrumented wasm module")
     );
     wasmparser::validate(&buf).expect("wasmparser validation fail");
 }

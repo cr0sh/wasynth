@@ -60,6 +60,7 @@ fn generate_tests_inner() -> anyhow::Result<TokenStream> {
                             let module = parse_wat(&contents);
                             test_sections(&module);
                             test_synth(&module);
+                            test_instrument(&module);
                         }
                     }
                     .into(),
@@ -73,6 +74,7 @@ fn generate_tests_inner() -> anyhow::Result<TokenStream> {
                             let module = parse_wasm(&contents);
                             test_sections(&module);
                             test_synth(&module);
+                            test_instrument(&module);
                         }
                     }
                     .into(),

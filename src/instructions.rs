@@ -1485,8 +1485,8 @@ impl Instruction {
                 } => {
                     outer.push(Self::If(
                         block_type,
-                        std::mem::take(&mut ret),
-                        Some(if_instrs),
+                        if_instrs,
+                        Some(std::mem::take(&mut ret)),
                     ));
                     ret = outer;
                     stack.push(Action::Parse {

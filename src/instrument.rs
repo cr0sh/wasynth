@@ -66,10 +66,54 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
         ),
     });
 
+    let type_indices = &module
+        .function_section
+        .get_or_insert_with(Default::default)
+        .type_indices;
+
+    let codesec = module.code_section.get_or_insert_with(Default::default);
+
+    assert_eq!(type_indices.len(), codesec.codes().len());
+
+    let mut funcs_to_append = Vec::new();
+    let mut codes_to_append = Vec::new();
+    for (funcidx, (tyidx, code)) in type_indices
+        .iter()
+        .copied()
+        .zip(codesec.codes_mut().iter_mut())
+        .enumerate()
+        .map(|(funcidx, y)| (funcidx + imports.len() + type_indices.len(), y))
+    {
+        let original_instrs = std::mem::replace(
+            &mut code.func_expr,
+            trampoline_instrs(funcidx, enter_hook_funcidx, leave_hook_funcidx),
+        );
+
+        codes_to_append.push(SynthCode {
+            locals: code.locals.clone(),
+            func_expr: original_instrs,
+        });
+        funcs_to_append.push(tyidx);
+
+        code.locals.truncate(0); // locals are not needed on trampoline
+    }
+
+    codesec.codes_mut().extend_from_slice(&codes_to_append);
+
+    module
+        .function_section
+        .as_mut()
+        .ok_or(Error::MissingSection("function"))?
+        .type_indices_mut()
+        .extend_from_slice(&funcs_to_append);
+
     // increment function indices greater than or equal to import_hook_funcidx
+    let fnidx_offset: u32 = (2 + funcs_to_append.len())
+        .try_into()
+        .expect("function offset overflow");
     let increment_fnidx = |x: &mut u32| {
         if *x >= enter_hook_funcidx {
-            *x += 2;
+            *x += fnidx_offset;
         }
     };
 
@@ -131,44 +175,6 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
             });
         }
     }
-
-    let type_indices = &module
-        .function_section
-        .get_or_insert_with(Default::default)
-        .type_indices;
-
-    let codesec = module.code_section.get_or_insert_with(Default::default);
-
-    assert_eq!(type_indices.len(), codesec.codes().len());
-
-    let mut funcs_to_append = Vec::new();
-    let mut codes_to_append = Vec::new();
-    for (funcidx, (tyidx, code)) in type_indices
-        .iter()
-        .copied()
-        .zip(codesec.codes_mut().iter_mut())
-        .enumerate()
-        .map(|(funcidx, y)| (funcidx + imports.len() + type_indices.len(), y))
-    {
-        let original_instrs = std::mem::replace(
-            &mut code.func_expr,
-            trampoline_instrs(funcidx, enter_hook_funcidx, leave_hook_funcidx),
-        );
-
-        codes_to_append.push(SynthCode {
-            locals: code.locals.clone(),
-            func_expr: original_instrs,
-        });
-        funcs_to_append.push(tyidx);
-    }
-
-    codesec.codes_mut().extend_from_slice(&codes_to_append);
-    module
-        .function_section
-        .as_mut()
-        .ok_or(Error::MissingSection("function"))?
-        .type_indices_mut()
-        .extend_from_slice(&funcs_to_append);
 
     Ok(())
 }

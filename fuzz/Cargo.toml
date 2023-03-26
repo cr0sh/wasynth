@@ -35,3 +35,9 @@ name = "wasm_smith_synth"
 path = "fuzz_targets/wasm_smith_synth.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "wasm_smith_instrument"
+path = "fuzz_targets/wasm_smith_instrument.rs"
+test = false
+doc = false

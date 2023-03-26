@@ -11,15 +11,35 @@ use crate::{
     Error,
 };
 
-fn trampoline_instrs(target_funcidx: usize, enter_funcidx: u32, leave_funcidx: u32) -> Expression {
+fn trampoline_instrs(
+    target_funcidx: usize,
+    target_type: &FuncType,
+    enter_funcidx: u32,
+    leave_funcidx: u32,
+) -> Expression {
     let target_funcidx = target_funcidx.try_into().expect("function index overflow");
-    Expression(vec![
+    let enter = vec![
         Instruction::I32Const(target_funcidx),
         Instruction::Call(enter_funcidx),
-        Instruction::Call(target_funcidx.try_into().expect("function index overflow")),
+    ];
+    let leave = vec![
         Instruction::I32Const(target_funcidx),
         Instruction::Call(leave_funcidx),
-    ])
+    ];
+    let mut call = Vec::new();
+    for (local_idx, _) in target_type.param().0.iter().enumerate() {
+        call.push(Instruction::LocalGet(
+            local_idx.try_into().expect("local index overflow"),
+        ));
+    }
+    call.push(Instruction::Call(
+        target_funcidx.try_into().expect("function index overflow"),
+    ));
+    let mut expr = Vec::new();
+    expr.extend_from_slice(&enter);
+    expr.extend_from_slice(&call);
+    expr.extend_from_slice(&leave);
+    Expression(expr)
 }
 
 /// Installs instrumentation hook for every function on the module.
@@ -82,11 +102,15 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
         .copied()
         .zip(codesec.codes_mut().iter_mut())
         .enumerate()
-        .map(|(funcidx, y)| (funcidx + imports.len() + type_indices.len(), y))
     {
         let original_instrs = std::mem::replace(
             &mut code.func_expr,
-            trampoline_instrs(funcidx, enter_hook_funcidx, leave_hook_funcidx),
+            trampoline_instrs(
+                funcidx + imports.len() + type_indices.len(),
+                &tysec[usize::try_from(tyidx).expect("type index overflow")],
+                enter_hook_funcidx,
+                leave_hook_funcidx,
+            ),
         );
 
         codes_to_append.push(SynthCode {
@@ -146,7 +170,10 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
     }
 
     if let Some(codesec) = module.code_section.as_mut() {
-        for code in codesec.codes_mut() {
+        for (funcidx, code) in codesec.codes_mut().iter_mut().enumerate() {
+            if u32::try_from(funcidx).expect("function index overflow") <= leave_hook_funcidx {
+                continue;
+            }
             code.func_expr_mut().visit_func_indices(increment_fnidx);
         }
     }

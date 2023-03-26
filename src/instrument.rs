@@ -174,6 +174,18 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
                 name: String::from("wasynth_hooks/leave"),
             });
         }
+
+        if let Some(indassocs) = namesec.local_names_mut() {
+            for indassoc in &mut *indassocs {
+                increment_fnidx(&mut indassoc.idx);
+            }
+        }
+
+        if let Some(indassocs) = namesec.label_names_mut() {
+            for indassoc in &mut *indassocs {
+                increment_fnidx(&mut indassoc.idx);
+            }
+        }
     }
 
     Ok(())

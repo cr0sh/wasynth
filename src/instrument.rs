@@ -95,6 +95,8 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
 
     assert_eq!(type_indices.len(), codesec.codes().len());
 
+    let existing_non_import_functions = type_indices.len();
+
     let mut funcs_to_append = Vec::new();
     let mut codes_to_append = Vec::new();
     for (funcidx, (tyidx, code)) in type_indices
@@ -170,8 +172,8 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
     }
 
     if let Some(codesec) = module.code_section.as_mut() {
-        for (funcidx, code) in codesec.codes_mut().iter_mut().enumerate() {
-            if u32::try_from(funcidx).expect("function index overflow") <= leave_hook_funcidx {
+        for (non_import_funcidx, code) in codesec.codes_mut().iter_mut().enumerate() {
+            if non_import_funcidx <= existing_non_import_functions {
                 continue;
             }
             code.func_expr_mut().visit_func_indices(increment_fnidx);

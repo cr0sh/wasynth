@@ -1,5 +1,5 @@
 [package]
-name = "wasynth"
+name = "wasm-instrument"
 version = "0.1.0"
 edition = "2021"
 
@@ -20,7 +20,7 @@ wasmprinter = "0.2.52"
 wat = "1.0.56"
 
 [workspace]
-members = ["tests-gen"]
+members = ["tests-gen", "wasm-edit"]
 
 [features]
 bytes_trace = []

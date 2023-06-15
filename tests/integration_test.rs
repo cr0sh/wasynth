@@ -1,6 +1,6 @@
 use std::sync::Once;
 
-use wasynth::{instrument::install_all, parse::Module};
+use wasm_instrument::{instrument::install_all, parse::Module};
 
 fn init_logger() {
     static ONCE: Once = Once::new();
@@ -16,7 +16,7 @@ fn parse_wat(wat_s: &str) -> Module {
 
 fn parse_wasm(wasm: &[u8]) -> Module {
     wasmparser::validate(wasm).expect("pre-parse validation fail");
-    wasynth::parse::Module::from_binary(wasm).expect("cannot parse wasm")
+    wasm_instrument::parse::Module::from_binary(wasm).expect("cannot parse wasm")
 }
 
 fn test_sections(module: &Module) {

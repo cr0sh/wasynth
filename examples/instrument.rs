@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     let s = include_bytes!("../tests/cases/wasynth_release.wasm");
     let wasm = wat::parse_bytes(s)?;
     let before = wasmprinter::print_bytes(wasm.clone()).unwrap();
-    let mut module = wasynth::parse::Module::from_binary(&wasm)?.into_synth()?;
-    wasynth::instrument::install_all(&mut module)?;
+    let mut module = wasm_instrument::parse::Module::from_binary(&wasm)?.into_synth()?;
+    wasm_instrument::instrument::install_all(&mut module)?;
 
     let mut buf = Vec::new();
     module.write_into(&mut buf)?;

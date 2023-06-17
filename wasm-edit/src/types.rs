@@ -13,8 +13,6 @@ mod import;
 
 use std::fmt::Display;
 
-use arrayvec::ArrayVec;
-
 pub use custom::*;
 pub use data::*;
 pub use element::*;
@@ -22,9 +20,6 @@ pub use export::*;
 pub use function::*;
 pub use global::*;
 pub use import::*;
-
-/// Max capacity of [`ValueType`]s that a single [`ResultType`] can hold.
-pub const RESULT_TYPE_ARRAY_MAX_SIZE: usize = 256;
 
 /// A WebAssembly reference type.
 ///
@@ -87,11 +82,11 @@ impl Display for ValueType {
 ///
 /// <https://webassembly.github.io/spec/core/binary/types.html#result-types>
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ResultType(ArrayVec<ValueType, RESULT_TYPE_ARRAY_MAX_SIZE>);
+pub struct ResultType(Vec<ValueType>);
 
 impl ResultType {
     pub fn new(types: &[ValueType]) -> Self {
-        let mut v = ArrayVec::new();
+        let mut v = Vec::new();
         for ty in types {
             v.push(*ty);
         }
@@ -102,7 +97,7 @@ impl ResultType {
         &self.0
     }
 
-    pub fn types_mut(&mut self) -> &mut ArrayVec<ValueType, RESULT_TYPE_ARRAY_MAX_SIZE> {
+    pub fn types_mut(&mut self) -> &mut Vec<ValueType> {
         &mut self.0
     }
 }

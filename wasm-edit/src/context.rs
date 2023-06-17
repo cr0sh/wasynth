@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_index() {
-        let mut context = Context::new();
+        let context = Context::new();
         let ty1 = context.add_type(FuncType {
             param: ResultType::new(&[]),
             result: ResultType::new(&[]),

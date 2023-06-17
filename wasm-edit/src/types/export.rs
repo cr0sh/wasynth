@@ -1,4 +1,4 @@
-use crate::context::IndexedRef;
+use crate::context::IndexedCell;
 
 use super::{FuncType, TableType};
 
@@ -9,8 +9,8 @@ pub struct Export<'a> {
 
 #[derive(Clone, Debug)]
 pub enum ExportDescription<'a> {
-    Func(IndexedRef<'a, FuncType>),
-    Table(IndexedRef<'a, TableType>),
+    Func(IndexedCell<'a, FuncType>),
+    Table(IndexedCell<'a, TableType>),
     Mem(u32),
     Global(u32),
 }

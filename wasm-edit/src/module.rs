@@ -1,5 +1,5 @@
 use crate::{
-    context::{Context, IndexedRef},
+    context::{Context, IndexedCell},
     types::FuncType,
 };
 
@@ -10,5 +10,5 @@ pub use crate::context::*;
 /// https://webassembly.github.io/spec/core/syntax/modules.html
 pub struct Module<'a> {
     context: &'a Context,
-    start: Option<IndexedRef<'a, FuncType>>,
+    start: Option<IndexedCell<'a, FuncType>>,
 }

@@ -1,4 +1,4 @@
-use std::{any::type_name, cell::Cell, fmt::Debug};
+use std::{any::type_name, cell::Cell, fmt::Debug, ops::Deref};
 
 use typed_arena::Arena;
 
@@ -20,57 +20,57 @@ impl Context {
         Self::default()
     }
 
-    pub fn add_type(&self, ty: FuncType) -> IndexedRef<'_, FuncType> {
+    pub fn add_type(&self, ty: FuncType) -> IndexedCell<'_, FuncType> {
         let index = self.types.len();
-        IndexedRef {
+        IndexedCell {
             index,
             cell: self.types.alloc(Cell::new(ty)),
         }
     }
 
-    pub fn add_function(&self, function: Function) -> IndexedRef<'_, Function> {
+    pub fn add_function(&self, function: Function) -> IndexedCell<'_, Function> {
         let index = self.types.len();
-        IndexedRef {
+        IndexedCell {
             index,
             cell: self.functions.alloc(Cell::new(function)),
         }
     }
 
-    pub fn add_table(&self, table: TableType) -> IndexedRef<'_, TableType> {
+    pub fn add_table(&self, table: TableType) -> IndexedCell<'_, TableType> {
         let index = self.types.len();
-        IndexedRef {
+        IndexedCell {
             index,
             cell: self.tables.alloc(Cell::new(table)),
         }
     }
 
-    pub fn add_memory(&self, memory: MemType) -> IndexedRef<'_, MemType> {
+    pub fn add_memory(&self, memory: MemType) -> IndexedCell<'_, MemType> {
         let index = self.types.len();
-        IndexedRef {
+        IndexedCell {
             index,
             cell: self.memories.alloc(Cell::new(memory)),
         }
     }
 
-    pub fn add_global(&self, global: Global) -> IndexedRef<'_, Global> {
+    pub fn add_global(&self, global: Global) -> IndexedCell<'_, Global> {
         let index = self.types.len();
-        IndexedRef {
+        IndexedCell {
             index,
             cell: self.globals.alloc(Cell::new(global)),
         }
     }
 
-    pub fn add_element(&self, element: Element) -> IndexedRef<'_, Element> {
+    pub fn add_element(&self, element: Element) -> IndexedCell<'_, Element> {
         let index = self.types.len();
-        IndexedRef {
+        IndexedCell {
             index,
             cell: self.elements.alloc(Cell::new(element)),
         }
     }
 
-    pub fn add_data(&self, data: Data) -> IndexedRef<'_, Data> {
+    pub fn add_data(&self, data: Data) -> IndexedCell<'_, Data> {
         let index = self.types.len();
-        IndexedRef {
+        IndexedCell {
             index,
             cell: self.datas.alloc(Cell::new(data)),
         }
@@ -79,12 +79,12 @@ impl Context {
 
 /// A symbolic reference to a WebAssembly type `T` which can obtain the index of itself.
 #[derive(Clone, Copy)]
-pub struct IndexedRef<'a, T> {
+pub struct IndexedCell<'a, T> {
     index: usize,
     cell: &'a Cell<T>,
 }
 
-impl<'a, T> IndexedRef<'a, T> {
+impl<'a, T> IndexedCell<'a, T> {
     /// Returns the index where this value is.
     pub fn index(&self) -> usize {
         self.index
@@ -100,12 +100,20 @@ impl<'a, T> IndexedRef<'a, T> {
     }
 }
 
-impl<'a, T> Debug for IndexedRef<'a, T> {
+impl<'a, T> Debug for IndexedCell<'a, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IndexedRef")
             .field("index", &self.index)
             .field("cell", &format!("Cell<{}>", type_name::<T>()))
             .finish()
+    }
+}
+
+impl<'a, T> Deref for IndexedCell<'a, T> {
+    type Target = Cell<T>;
+
+    fn deref(&self) -> &Self::Target {
+        self.cell
     }
 }
 

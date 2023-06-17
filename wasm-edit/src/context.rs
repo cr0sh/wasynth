@@ -2,17 +2,17 @@ use std::{any::type_name, cell::Cell, fmt::Debug};
 
 use typed_arena::Arena;
 
-use crate::types::{Element, FuncType, MemType, TableType};
+use crate::types::{Data, Element, FuncType, Function, Global, MemType, TableType};
 
 #[derive(Default)]
-pub(crate) struct Context {
+pub struct Context {
     types: Arena<Cell<FuncType>>,
-    // functions: Arena<Cell<Function>>,
+    functions: Arena<Cell<Function>>,
     tables: Arena<Cell<TableType>>,
     memories: Arena<Cell<MemType>>,
-    // globals: Arena<Cell<Global>>
+    globals: Arena<Cell<Global>>,
     elements: Arena<Cell<Element>>,
-    // data: Arena<Cell<Data>>,
+    datas: Arena<Cell<Data>>,
 }
 
 impl Context {
@@ -25,6 +25,54 @@ impl Context {
         IndexedRef {
             index,
             cell: self.types.alloc(Cell::new(ty)),
+        }
+    }
+
+    pub fn add_function(&self, function: Function) -> IndexedRef<'_, Function> {
+        let index = self.types.len();
+        IndexedRef {
+            index,
+            cell: self.functions.alloc(Cell::new(function)),
+        }
+    }
+
+    pub fn add_table(&self, table: TableType) -> IndexedRef<'_, TableType> {
+        let index = self.types.len();
+        IndexedRef {
+            index,
+            cell: self.tables.alloc(Cell::new(table)),
+        }
+    }
+
+    pub fn add_memory(&self, memory: MemType) -> IndexedRef<'_, MemType> {
+        let index = self.types.len();
+        IndexedRef {
+            index,
+            cell: self.memories.alloc(Cell::new(memory)),
+        }
+    }
+
+    pub fn add_global(&self, global: Global) -> IndexedRef<'_, Global> {
+        let index = self.types.len();
+        IndexedRef {
+            index,
+            cell: self.globals.alloc(Cell::new(global)),
+        }
+    }
+
+    pub fn add_element(&self, element: Element) -> IndexedRef<'_, Element> {
+        let index = self.types.len();
+        IndexedRef {
+            index,
+            cell: self.elements.alloc(Cell::new(element)),
+        }
+    }
+
+    pub fn add_data(&self, data: Data) -> IndexedRef<'_, Data> {
+        let index = self.types.len();
+        IndexedRef {
+            index,
+            cell: self.datas.alloc(Cell::new(data)),
         }
     }
 }

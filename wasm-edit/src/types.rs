@@ -4,8 +4,11 @@
 
 // section-specific types
 mod custom;
+mod data;
 mod element;
 mod export;
+mod function;
+mod global;
 mod import;
 
 use std::fmt::Display;
@@ -13,8 +16,11 @@ use std::fmt::Display;
 use arrayvec::ArrayVec;
 
 pub use custom::*;
+pub use data::*;
 pub use element::*;
 pub use export::*;
+pub use function::*;
+pub use global::*;
 pub use import::*;
 
 /// Max capacity of [`ValueType`]s that a single [`ResultType`] can hold.

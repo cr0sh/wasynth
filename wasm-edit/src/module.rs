@@ -1,3 +1,5 @@
-use crate::types::FuncType;
+use crate::context::Context;
 
-pub struct Module {}
+pub struct Module {
+    context: Context,
+}

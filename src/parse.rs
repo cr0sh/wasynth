@@ -220,6 +220,9 @@ impl<'bytes> Module<'bytes> {
         &self.sections
     }
 
+    /// Validates if the module meets some basic requirements.
+    /// Note that this validation does not strictly follow the *appendix 7.3: Validation Algorithm* of
+    /// the WebAssembly specification.
     pub fn validate(&self) -> Result<(), Error> {
         trace!("validation start");
         for section in self.sections() {

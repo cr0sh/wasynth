@@ -15,7 +15,7 @@ difference = "2.0.0"
 env_logger = "0.10.0"
 quickcheck = "1.0.3"
 tests-gen = { path = "tests-gen" }
-wasmparser = "0.102.0"
+wasmparser = "0.107.0"
 wasmprinter = "0.2.52"
 wat = "1.0.56"
 

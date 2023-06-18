@@ -111,6 +111,13 @@ impl<'a, T> IndexedRef<'a, T> {
     pub fn index_u32(&self) -> u32 {
         self.index().try_into().expect("index overflow")
     }
+
+    /// Returns if this reference is unused by any other entities.
+    ///
+    /// Basically this returns true iff the strong refcount of the inner [`Rc`] is 1.
+    pub(crate) fn is_unused(&self) -> bool {
+        Rc::strong_count(&self.refcell) == 1
+    }
 }
 
 impl<'a, T> Debug for IndexedRef<'a, T> {

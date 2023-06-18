@@ -7,7 +7,7 @@ pub use crate::context::*;
 
 /// A WebAssembly Module implementing its semantic structure.
 ///
-/// https://webassembly.github.io/spec/core/syntax/modules.html
+/// <https://webassembly.github.io/spec/core/syntax/modules.html>
 pub struct Module<'a> {
     context: &'a Context,
     pub start: Option<IndexedRef<'a, FuncType>>,

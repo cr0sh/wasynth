@@ -18,7 +18,7 @@ impl Context {
         Self::default()
     }
 
-    pub fn add_type(&self, ty: FuncType) -> IndexedCell<'_, FuncType> {
+    pub(crate) fn add_type(&self, ty: FuncType) -> IndexedCell<'_, FuncType> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(ty));
         IndexedCell {
@@ -28,7 +28,7 @@ impl Context {
         }
     }
 
-    pub fn add_function(&self, function: Function) -> IndexedCell<'_, Function> {
+    pub(crate) fn add_function(&self, function: Function) -> IndexedCell<'_, Function> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(function));
         IndexedCell {
@@ -38,7 +38,7 @@ impl Context {
         }
     }
 
-    pub fn add_table(&self, table: TableType) -> IndexedCell<'_, TableType> {
+    pub(crate) fn add_table(&self, table: TableType) -> IndexedCell<'_, TableType> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(table));
         IndexedCell {
@@ -48,7 +48,7 @@ impl Context {
         }
     }
 
-    pub fn add_memory(&self, memory: MemType) -> IndexedCell<'_, MemType> {
+    pub(crate) fn add_memory(&self, memory: MemType) -> IndexedCell<'_, MemType> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(memory));
         IndexedCell {
@@ -58,7 +58,7 @@ impl Context {
         }
     }
 
-    pub fn add_global(&self, global: Global) -> IndexedCell<'_, Global> {
+    pub(crate) fn add_global(&self, global: Global) -> IndexedCell<'_, Global> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(global));
         IndexedCell {
@@ -68,7 +68,7 @@ impl Context {
         }
     }
 
-    pub fn add_element(&self, element: Element) -> IndexedCell<'_, Element> {
+    pub(crate) fn add_element(&self, element: Element) -> IndexedCell<'_, Element> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(element));
         IndexedCell {
@@ -78,7 +78,7 @@ impl Context {
         }
     }
 
-    pub fn add_data(&self, data: Data) -> IndexedCell<'_, Data> {
+    pub(crate) fn add_data(&self, data: Data) -> IndexedCell<'_, Data> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(data));
         IndexedCell {

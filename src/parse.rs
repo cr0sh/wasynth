@@ -13,6 +13,7 @@ use sections::{
     FunctionSection, GlobalSection, ImportSection, MemorySection, StartSection, TableSection,
     TypeSection,
 };
+use wasm_edit::Context;
 
 use self::sections::NameSection;
 
@@ -214,6 +215,153 @@ impl<'bytes> Module<'bytes> {
                 .map(|x| x.into_synth())
                 .transpose()?,
         })
+    }
+
+    /// Converts this module into [`wasm_edit::Module`] type, with [`Context`] given.
+    ///
+    /// [`Context`]: wasm_edit::Context
+    pub fn into_edit(self, context: &mut Context) -> Result<wasm_edit::Module, Error> {
+        trait IteratorExt: Iterator {
+            fn extract_element(
+                self,
+                section_name: &'static str,
+            ) -> Result<Option<Self::Item>, Error>;
+        }
+
+        impl<T, I: Iterator<Item = T>> IteratorExt for I {
+            fn extract_element(mut self, section_name: &'static str) -> Result<Option<T>, Error> {
+                let first = self.next();
+                if self.next().is_some() {
+                    return Err(Error::DuplicateSection(section_name));
+                }
+                Ok(first)
+            }
+        }
+
+        let mut module = wasm_edit::Module::from_context(context);
+
+        let type_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Type(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("type")?;
+        let import_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Import(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("import")?;
+        let function_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Function(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("function")?;
+        let table_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Table(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("table")?;
+        let memory_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Memory(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("memory")?;
+        let global_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Global(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("global")?;
+        let export_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Export(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("export")?;
+        let start_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Start(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("start")?;
+        let element_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Element(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("element")?
+            .map(|x| x.into_synth())
+            .transpose()?;
+        let code_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Code(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("code")?;
+        let data_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Data(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("data")?;
+        let data_count_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::DataCount(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("data count")?;
+        let custom_sections: Vec<CustomSection> = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Custom(x) => Some(*x),
+                _ => None,
+            })
+            .collect();
+        let name_section = self
+            .sections
+            .iter()
+            .filter_map(|x| match x {
+                Section::Name(x) => Some(*x),
+                _ => None,
+            })
+            .extract_element("name")?
+            .map(|x| x.into_synth())
+            .transpose()?;
+
+        if let Some(type_section) = type_section {
+            type_section.edit_module(&mut module)?;
+        }
+
+        todo!()
     }
 
     pub fn sections(&self) -> &[Section<'bytes>] {

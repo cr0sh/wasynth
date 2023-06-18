@@ -18,6 +18,10 @@ impl<'bytes> TypeSection<'bytes> {
         })
     }
 
+    pub(crate) fn edit_module(self, module: &mut wasm_edit::Module) -> Result<(), Error> {
+        todo!();
+    }
+
     pub fn types(&self) -> Result<impl Iterator<Item = Result<FuncType, Error>> + '_, Error> {
         self.bytes.advance_vector(FuncType::from_bytes)
     }

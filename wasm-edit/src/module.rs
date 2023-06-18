@@ -14,6 +14,13 @@ pub struct Module<'a> {
 }
 
 impl<'a> Module<'a> {
+    pub fn from_context(context: &'a mut Context) -> Self {
+        Self {
+            context,
+            start: None,
+        }
+    }
+
     /// Add a [`FuncType`] value to this Module. Returns the reference to the added value.
     pub fn add_type(&self, ty: FuncType) -> IndexedRef<'_, FuncType> {
         self.context.add_type(ty)

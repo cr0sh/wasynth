@@ -9,6 +9,7 @@ edition = "2021"
 leb128 = "0.2.5"
 log = "0.4.17"
 thiserror = "1.0.38"
+wasm-edit = { version = "0.1.0", path = "wasm-edit" }
 
 [dev-dependencies]
 difference = "2.0.0"

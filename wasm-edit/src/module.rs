@@ -49,3 +49,27 @@ impl<'a> Module<'a> {
         self.context.add_data(data)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::types::{ResultType, ValueType};
+
+    use super::*;
+
+    #[test]
+    fn test_index() {
+        let mut context = Context::new();
+        let module = Module::from_context(&mut context);
+        let ty1 = module.add_type(FuncType {
+            param: ResultType::new(&[]),
+            result: ResultType::new(&[]),
+        });
+        let ty2 = module.add_type(FuncType {
+            param: ResultType::new(&[ValueType::I32]),
+            result: ResultType::new(&[ValueType::I64]),
+        });
+
+        assert_eq!(ty1.index(), 0);
+        assert_eq!(ty2.index(), 1);
+    }
+}

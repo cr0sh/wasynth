@@ -4,13 +4,13 @@ use crate::types::{Data, Element, FuncType, Function, Global, MemType, TableType
 
 #[derive(Default)]
 pub struct Context {
-    types: Vec<Rc<RefCell<FuncType>>>,
-    functions: Vec<Rc<RefCell<Function>>>,
-    tables: Vec<Rc<RefCell<TableType>>>,
-    memories: Vec<Rc<RefCell<MemType>>>,
-    globals: Vec<Rc<RefCell<Global>>>,
-    elements: Vec<Rc<RefCell<Element>>>,
-    datas: Vec<Rc<RefCell<Data>>>,
+    types: RefCell<Vec<Rc<RefCell<FuncType>>>>,
+    functions: RefCell<Vec<Rc<RefCell<Function>>>>,
+    tables: RefCell<Vec<Rc<RefCell<TableType>>>>,
+    memories: RefCell<Vec<Rc<RefCell<MemType>>>>,
+    globals: RefCell<Vec<Rc<RefCell<Global>>>>,
+    elements: RefCell<Vec<Rc<RefCell<Element>>>>,
+    datas: RefCell<Vec<Rc<RefCell<Data>>>>,
 }
 
 impl Context {
@@ -18,10 +18,11 @@ impl Context {
         Self::default()
     }
 
-    pub(crate) fn add_type(&mut self, ty: FuncType) -> IndexedRef<'_, FuncType> {
-        let index = self.types.len();
+    pub(crate) fn add_type(&self, ty: FuncType) -> IndexedRef<'_, FuncType> {
+        let mut types = self.types.borrow_mut();
+        let index = types.len();
         let refcell = Rc::new(RefCell::new(ty));
-        self.types.push(Rc::clone(&refcell));
+        types.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -29,10 +30,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_function(&mut self, function: Function) -> IndexedRef<'_, Function> {
-        let index = self.functions.len();
+    pub(crate) fn add_function(&self, function: Function) -> IndexedRef<'_, Function> {
+        let mut functions = self.functions.borrow_mut();
+        let index = functions.len();
         let refcell = Rc::new(RefCell::new(function));
-        self.functions.push(Rc::clone(&refcell));
+        functions.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -40,10 +42,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_table(&mut self, table: TableType) -> IndexedRef<'_, TableType> {
-        let index = self.tables.len();
+    pub(crate) fn add_table(&self, table: TableType) -> IndexedRef<'_, TableType> {
+        let mut tables = self.tables.borrow_mut();
+        let index = tables.len();
         let refcell = Rc::new(RefCell::new(table));
-        self.tables.push(Rc::clone(&refcell));
+        tables.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -51,10 +54,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_memory(&mut self, memory: MemType) -> IndexedRef<'_, MemType> {
-        let index = self.memories.len();
+    pub(crate) fn add_memory(&self, memory: MemType) -> IndexedRef<'_, MemType> {
+        let mut memories = self.memories.borrow_mut();
+        let index = memories.len();
         let refcell = Rc::new(RefCell::new(memory));
-        self.memories.push(Rc::clone(&refcell));
+        memories.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -62,10 +66,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_global(&mut self, global: Global) -> IndexedRef<'_, Global> {
-        let index = self.globals.len();
+    pub(crate) fn add_global(&self, global: Global) -> IndexedRef<'_, Global> {
+        let mut globals = self.globals.borrow_mut();
+        let index = globals.len();
         let refcell = Rc::new(RefCell::new(global));
-        self.globals.push(Rc::clone(&refcell));
+        globals.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -73,10 +78,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_element(&mut self, element: Element) -> IndexedRef<'_, Element> {
-        let index = self.elements.len();
+    pub(crate) fn add_element(&self, element: Element) -> IndexedRef<'_, Element> {
+        let mut elements = self.elements.borrow_mut();
+        let index = elements.len();
         let refcell = Rc::new(RefCell::new(element));
-        self.elements.push(Rc::clone(&refcell));
+        elements.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -84,10 +90,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_data(&mut self, data: Data) -> IndexedRef<'_, Data> {
-        let index = self.datas.len();
+    pub(crate) fn add_data(&self, data: Data) -> IndexedRef<'_, Data> {
+        let mut datas = self.datas.borrow_mut();
+        let index = datas.len();
         let refcell = Rc::new(RefCell::new(data));
-        self.datas.push(Rc::clone(&refcell));
+        datas.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,

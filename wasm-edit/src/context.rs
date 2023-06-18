@@ -18,9 +18,10 @@ impl Context {
         Self::default()
     }
 
-    pub(crate) fn add_type(&self, ty: FuncType) -> IndexedRef<'_, FuncType> {
+    pub(crate) fn add_type(&mut self, ty: FuncType) -> IndexedRef<'_, FuncType> {
         let index = self.types.len();
         let refcell = Rc::new(RefCell::new(ty));
+        self.types.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -28,9 +29,10 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_function(&self, function: Function) -> IndexedRef<'_, Function> {
-        let index = self.types.len();
+    pub(crate) fn add_function(&mut self, function: Function) -> IndexedRef<'_, Function> {
+        let index = self.functions.len();
         let refcell = Rc::new(RefCell::new(function));
+        self.functions.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -38,9 +40,10 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_table(&self, table: TableType) -> IndexedRef<'_, TableType> {
-        let index = self.types.len();
+    pub(crate) fn add_table(&mut self, table: TableType) -> IndexedRef<'_, TableType> {
+        let index = self.tables.len();
         let refcell = Rc::new(RefCell::new(table));
+        self.tables.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -48,9 +51,10 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_memory(&self, memory: MemType) -> IndexedRef<'_, MemType> {
-        let index = self.types.len();
+    pub(crate) fn add_memory(&mut self, memory: MemType) -> IndexedRef<'_, MemType> {
+        let index = self.memories.len();
         let refcell = Rc::new(RefCell::new(memory));
+        self.memories.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -58,9 +62,10 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_global(&self, global: Global) -> IndexedRef<'_, Global> {
-        let index = self.types.len();
+    pub(crate) fn add_global(&mut self, global: Global) -> IndexedRef<'_, Global> {
+        let index = self.globals.len();
         let refcell = Rc::new(RefCell::new(global));
+        self.globals.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -68,9 +73,10 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_element(&self, element: Element) -> IndexedRef<'_, Element> {
-        let index = self.types.len();
+    pub(crate) fn add_element(&mut self, element: Element) -> IndexedRef<'_, Element> {
+        let index = self.elements.len();
         let refcell = Rc::new(RefCell::new(element));
+        self.elements.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,
@@ -78,9 +84,10 @@ impl Context {
         }
     }
 
-    pub(crate) fn add_data(&self, data: Data) -> IndexedRef<'_, Data> {
-        let index = self.types.len();
+    pub(crate) fn add_data(&mut self, data: Data) -> IndexedRef<'_, Data> {
+        let index = self.datas.len();
         let refcell = Rc::new(RefCell::new(data));
+        self.datas.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,

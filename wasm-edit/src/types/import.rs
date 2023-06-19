@@ -9,7 +9,7 @@ pub struct Import {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ImportDescription {
-    Type(u32),
+    Func(u32),
     Table(TableType),
     Memory(MemType),
     Global(GlobalType),

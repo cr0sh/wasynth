@@ -1,4 +1,11 @@
-use std::{any::type_name, cell::RefCell, fmt::Debug, marker::PhantomData, ops::Deref, rc::Rc};
+use std::{
+    any::type_name,
+    cell::{Cell, RefCell},
+    fmt::Debug,
+    marker::PhantomData,
+    ops::Deref,
+    rc::Rc,
+};
 
 use crate::types::{Data, Element, FuncType, Function, Global, MemType, TableType};
 
@@ -11,6 +18,14 @@ pub struct Context {
     globals: RefCell<Vec<Rc<RefCell<Global>>>>,
     elements: RefCell<Vec<Rc<RefCell<Element>>>>,
     datas: RefCell<Vec<Rc<RefCell<Data>>>>,
+    num_function_imports: Cell<usize>,
+    num_table_imports: Cell<usize>,
+    num_memory_imports: Cell<usize>,
+    num_global_imports: Cell<usize>,
+    function_imports: RefCell<Vec<Rc<RefCell<FuncType>>>>,
+    table_imports: RefCell<Vec<Rc<RefCell<TableType>>>>,
+    memory_imports: RefCell<Vec<Rc<RefCell<MemType>>>>,
+    global_imports: RefCell<Vec<Rc<RefCell<Global>>>>,
 }
 
 impl Context {

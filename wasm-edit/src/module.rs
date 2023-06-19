@@ -1,6 +1,8 @@
+use std::{cell::Cell, rc::Rc};
+
 use crate::{
     context::{Context, IndexedRef},
-    types::{Data, Element, FuncType, Function, Global, MemType, TableType},
+    types::{Data, Element, Export, FuncType, Function, Global, MemType, TableType},
 };
 
 pub use crate::context::*;
@@ -11,6 +13,7 @@ pub use crate::context::*;
 pub struct Module<'a> {
     context: &'a Context,
     start: Option<IndexedRef<'a, FuncType>>,
+    exports: Vec<Export<'a>>,
 }
 
 impl<'a> Module<'a> {
@@ -18,6 +21,7 @@ impl<'a> Module<'a> {
         Self {
             context,
             start: None,
+            exports: Vec::new(),
         }
     }
 
@@ -55,6 +59,18 @@ impl<'a> Module<'a> {
     pub fn add_data(&self, data: Data) -> IndexedRef<'_, Data> {
         self.context.add_data(data)
     }
+}
+
+pub enum ImportOrStandalone<'a, T> {
+    Import {
+        module: String,
+        name: String,
+        indexed_ref: IndexedRef<'a, T>,
+    },
+    Standalone {
+        preceding_imports: &'a Cell<usize>,
+        indexed_ref: IndexedRef<'a, T>,
+    },
 }
 
 #[cfg(test)]

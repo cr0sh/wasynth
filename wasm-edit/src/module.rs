@@ -10,7 +10,7 @@ pub use crate::context::*;
 /// <https://webassembly.github.io/spec/core/syntax/modules.html>
 pub struct Module<'a> {
     context: &'a Context,
-    pub start: Option<IndexedRef<'a, FuncType>>,
+    start: Option<IndexedRef<'a, FuncType>>,
 }
 
 impl<'a> Module<'a> {

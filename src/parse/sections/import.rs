@@ -81,7 +81,7 @@ impl<'bytes> Import<'bytes> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ImportDescription {
-    Type(u32),
+    Func(u32),
     Table(TableType),
     Memory(MemType),
     Global(GlobalType),
@@ -93,7 +93,7 @@ impl ImportDescription {
         match id {
             0x00 => {
                 let (ty, bytes) = bytes.advance_u32()?;
-                Ok((Self::Type(ty), bytes))
+                Ok((Self::Func(ty), bytes))
             }
             0x01 => {
                 let (table, bytes) = TableType::from_bytes(bytes)?;
@@ -113,7 +113,7 @@ impl ImportDescription {
 
     pub(crate) fn into_synth(self) -> SynthImportDescription {
         match self {
-            ImportDescription::Type(x) => SynthImportDescription::Type(x),
+            ImportDescription::Func(x) => SynthImportDescription::Func(x),
             ImportDescription::Table(tt) => SynthImportDescription::Table(tt),
             ImportDescription::Memory(mt) => SynthImportDescription::Memory(mt),
             ImportDescription::Global(gt) => SynthImportDescription::Global(gt),

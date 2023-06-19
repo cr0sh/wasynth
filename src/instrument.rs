@@ -63,7 +63,7 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
 
     let enter_hook_funcidx: u32 = imports
         .iter()
-        .filter(|x| matches!(x.description, SynthImportDescription::Type(..)))
+        .filter(|x| matches!(x.description, SynthImportDescription::Func(..)))
         .count()
         .try_into()
         .expect("function index overflow");
@@ -74,14 +74,14 @@ pub fn install_all(module: &mut SynthModule) -> Result<(), Error> {
     imports.push(SynthImport {
         module: String::from("wasynth_hooks"),
         name: String::from("enter"),
-        description: SynthImportDescription::Type(
+        description: SynthImportDescription::Func(
             import_tyidx.try_into().expect("type index overflow"),
         ),
     });
     imports.push(SynthImport {
         module: String::from("wasynth_hooks"),
         name: String::from("leave"),
-        description: SynthImportDescription::Type(
+        description: SynthImportDescription::Func(
             import_tyidx.try_into().expect("type index overflow"),
         ),
     });

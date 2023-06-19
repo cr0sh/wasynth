@@ -73,7 +73,7 @@ impl SynthImport {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SynthImportDescription {
-    Type(u32),
+    Func(u32),
     Table(TableType),
     Memory(MemType),
     Global(GlobalType),
@@ -82,7 +82,7 @@ pub enum SynthImportDescription {
 impl SynthImportDescription {
     pub(crate) fn write_into(&self, wr: &mut impl Write) -> Result<(), io::Error> {
         match self {
-            SynthImportDescription::Type(x) => {
+            SynthImportDescription::Func(x) => {
                 wr.write_all(&[0x00])?;
                 wr.write_u32(*x)?;
                 Ok(())

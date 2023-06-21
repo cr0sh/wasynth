@@ -18,10 +18,10 @@ pub struct Context {
     globals: RefCell<Vec<Rc<RefCell<Global>>>>,
     elements: RefCell<Vec<Rc<RefCell<Element>>>>,
     datas: RefCell<Vec<Rc<RefCell<Data>>>>,
-    num_function_imports: Cell<usize>,
-    num_table_imports: Cell<usize>,
-    num_memory_imports: Cell<usize>,
-    num_global_imports: Cell<usize>,
+    pub(crate) num_function_imports: Cell<usize>,
+    pub(crate) num_table_imports: Cell<usize>,
+    pub(crate) num_memory_imports: Cell<usize>,
+    pub(crate) num_global_imports: Cell<usize>,
     function_imports: RefCell<Vec<Rc<RefCell<FuncType>>>>,
     table_imports: RefCell<Vec<Rc<RefCell<TableType>>>>,
     memory_imports: RefCell<Vec<Rc<RefCell<MemType>>>>,
@@ -110,6 +110,54 @@ impl Context {
         let index = datas.len();
         let refcell = Rc::new(RefCell::new(data));
         datas.push(Rc::clone(&refcell));
+        IndexedRef {
+            index,
+            refcell,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub(crate) fn add_function_import(&self, ty: FuncType) -> IndexedRef<'_, FuncType> {
+        let mut function_imports = self.function_imports.borrow_mut();
+        let index = function_imports.len();
+        let refcell = Rc::new(RefCell::new(ty));
+        function_imports.push(Rc::clone(&refcell));
+        IndexedRef {
+            index,
+            refcell,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub(crate) fn add_table_import(&self, table: TableType) -> IndexedRef<'_, TableType> {
+        let mut table_imports = self.table_imports.borrow_mut();
+        let index = table_imports.len();
+        let refcell = Rc::new(RefCell::new(table));
+        table_imports.push(Rc::clone(&refcell));
+        IndexedRef {
+            index,
+            refcell,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub(crate) fn add_memory_import(&self, memory: MemType) -> IndexedRef<'_, MemType> {
+        let mut memory_imports = self.memory_imports.borrow_mut();
+        let index = memory_imports.len();
+        let refcell = Rc::new(RefCell::new(memory));
+        memory_imports.push(Rc::clone(&refcell));
+        IndexedRef {
+            index,
+            refcell,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub(crate) fn add_global_import(&self, global: Global) -> IndexedRef<'_, Global> {
+        let mut global_imports = self.global_imports.borrow_mut();
+        let index = global_imports.len();
+        let refcell = Rc::new(RefCell::new(global));
+        global_imports.push(Rc::clone(&refcell));
         IndexedRef {
             index,
             refcell,

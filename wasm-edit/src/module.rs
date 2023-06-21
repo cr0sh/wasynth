@@ -31,23 +31,35 @@ impl<'a> Module<'a> {
     }
 
     /// Add a [`Function`] value to this Module. Returns the reference to the added value.
-    pub fn add_function(&self, function: Function) -> IndexedRef<'_, Function> {
-        self.context.add_function(function)
+    pub fn add_function(&self, function: Function) -> ImportOrStandalone<'_, Function> {
+        ImportOrStandalone::Standalone {
+            preceding_imports: &self.context.num_function_imports,
+            indexed_ref: self.context.add_function(function),
+        }
     }
 
     /// Add a [`TableType`] value to this Module. Returns the reference to the added value.
-    pub fn add_table(&self, table: TableType) -> IndexedRef<'_, TableType> {
-        self.context.add_table(table)
+    pub fn add_table(&self, table: TableType) -> ImportOrStandalone<'_, TableType> {
+        ImportOrStandalone::Standalone {
+            preceding_imports: &self.context.num_table_imports,
+            indexed_ref: self.context.add_table(table),
+        }
     }
 
     /// Add a [`MemType`] value to this Module. Returns the reference to the added value.
-    pub fn add_memory(&self, memory: MemType) -> IndexedRef<'_, MemType> {
-        self.context.add_memory(memory)
+    pub fn add_memory(&self, memory: MemType) -> ImportOrStandalone<'_, MemType> {
+        ImportOrStandalone::Standalone {
+            preceding_imports: &self.context.num_memory_imports,
+            indexed_ref: self.context.add_memory(memory),
+        }
     }
 
     /// Add a [`Global`] value to this Module. Returns the reference to the added value.
-    pub fn add_global(&self, global: Global) -> IndexedRef<'_, Global> {
-        self.context.add_global(global)
+    pub fn add_global(&self, global: Global) -> ImportOrStandalone<'_, Global> {
+        ImportOrStandalone::Standalone {
+            preceding_imports: &self.context.num_global_imports,
+            indexed_ref: self.context.add_global(global),
+        }
     }
 
     /// Add an [`Element`] value to this Module. Returns the reference to the added value.
@@ -58,6 +70,62 @@ impl<'a> Module<'a> {
     /// Add a [`Data`] value to this Module. Returns the reference to the added value.
     pub fn add_data(&self, data: Data) -> IndexedRef<'_, Data> {
         self.context.add_data(data)
+    }
+
+    /// Add a function import to this module. Returns the reference to the imported function.
+    pub fn import_function(
+        &self,
+        module: String,
+        name: String,
+        ty: FuncType,
+    ) -> ImportOrStandalone<'_, FuncType> {
+        ImportOrStandalone::Import {
+            module,
+            name,
+            indexed_ref: self.context.add_function_import(ty),
+        }
+    }
+
+    /// Add a table import to this module. Returns the reference to the imported function.
+    pub fn import_table(
+        &self,
+        module: String,
+        name: String,
+        table: TableType,
+    ) -> ImportOrStandalone<'_, TableType> {
+        ImportOrStandalone::Import {
+            module,
+            name,
+            indexed_ref: self.context.add_table_import(table),
+        }
+    }
+
+    /// Add a memory import to this module. Returns the reference to the imported function.
+    pub fn import_memory(
+        &self,
+        module: String,
+        name: String,
+        memory: MemType,
+    ) -> ImportOrStandalone<'_, MemType> {
+        ImportOrStandalone::Import {
+            module,
+            name,
+            indexed_ref: self.context.add_memory_import(memory),
+        }
+    }
+
+    /// Add a global import to this module. Returns the reference to the imported function.
+    pub fn import_global(
+        &self,
+        module: String,
+        name: String,
+        global: Global,
+    ) -> ImportOrStandalone<'_, Global> {
+        ImportOrStandalone::Import {
+            module,
+            name,
+            indexed_ref: self.context.add_global_import(global),
+        }
     }
 }
 

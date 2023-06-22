@@ -143,7 +143,10 @@ pub enum ImportOrStandalone<'a, T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::{ResultType, ValueType};
+    use crate::{
+        instructions::Expression,
+        types::{ResultType, ValueType},
+    };
 
     use super::*;
 
@@ -162,5 +165,42 @@ mod tests {
 
         assert_eq!(ty1.index(), 0);
         assert_eq!(ty2.index(), 1);
+    }
+
+    #[test]
+    fn test_num_imports() {
+        let mut context = Context::new();
+        let module = Module::from_context(&mut context);
+        let func1 = module.add_function(Function::new(
+            FuncType {
+                param: ResultType::new(&[ValueType::I32]),
+                result: ResultType::new(&[ValueType::I64]),
+            },
+            &[],
+            Expression(vec![]),
+        ));
+
+        match func1 {
+            ImportOrStandalone::Import { .. } => panic!("match failed"),
+            ImportOrStandalone::Standalone {
+                preceding_imports, ..
+            } => assert_eq!(preceding_imports.get(), 0),
+        }
+
+        let _import1 = module.import_function(
+            String::from("hello"),
+            String::from("world"),
+            FuncType {
+                param: ResultType::new(&[]),
+                result: ResultType::new(&[]),
+            },
+        );
+
+        match func1 {
+            ImportOrStandalone::Import { .. } => panic!("match failed"),
+            ImportOrStandalone::Standalone {
+                preceding_imports, ..
+            } => assert_eq!(preceding_imports.get(), 1),
+        }
     }
 }

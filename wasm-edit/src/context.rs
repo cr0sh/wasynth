@@ -122,6 +122,7 @@ impl Context {
         let index = function_imports.len();
         let refcell = Rc::new(RefCell::new(ty));
         function_imports.push(Rc::clone(&refcell));
+        self.num_function_imports.set(function_imports.len());
         IndexedRef {
             index,
             refcell,
@@ -134,6 +135,7 @@ impl Context {
         let index = table_imports.len();
         let refcell = Rc::new(RefCell::new(table));
         table_imports.push(Rc::clone(&refcell));
+        self.num_table_imports.set(table_imports.len());
         IndexedRef {
             index,
             refcell,
@@ -146,6 +148,7 @@ impl Context {
         let index = memory_imports.len();
         let refcell = Rc::new(RefCell::new(memory));
         memory_imports.push(Rc::clone(&refcell));
+        self.num_memory_imports.set(memory_imports.len());
         IndexedRef {
             index,
             refcell,
@@ -158,6 +161,7 @@ impl Context {
         let index = global_imports.len();
         let refcell = Rc::new(RefCell::new(global));
         global_imports.push(Rc::clone(&refcell));
+        self.num_global_imports.set(global_imports.len());
         IndexedRef {
             index,
             refcell,

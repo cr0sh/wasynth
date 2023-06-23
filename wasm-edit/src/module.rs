@@ -1,4 +1,4 @@
-use std::{cell::Cell, rc::Rc};
+use std::cell::{Cell, RefCell};
 
 use crate::{
     context::{Context, IndexedRef},
@@ -13,7 +13,7 @@ pub use crate::context::*;
 pub struct Module<'a> {
     context: &'a Context,
     start: Option<IndexedRef<'a, FuncType>>,
-    exports: Vec<Export<'a>>,
+    exports: RefCell<Vec<Export<'a>>>,
 }
 
 impl<'a> Module<'a> {
@@ -21,7 +21,7 @@ impl<'a> Module<'a> {
         Self {
             context,
             start: None,
-            exports: Vec::new(),
+            exports: RefCell::new(Vec::new()),
         }
     }
 
@@ -126,6 +126,34 @@ impl<'a> Module<'a> {
             name,
             indexed_ref: self.context.add_global_import(global),
         }
+    }
+
+    pub fn export_function(&'a self, name: String, function: IndexedRef<'a, Function>) {
+        self.exports.borrow_mut().push(Export {
+            name,
+            description: crate::types::ExportDescription::Func(function),
+        });
+    }
+
+    pub fn export_table(&'a self, name: String, table: IndexedRef<'a, TableType>) {
+        self.exports.borrow_mut().push(Export {
+            name,
+            description: crate::types::ExportDescription::Table(table),
+        });
+    }
+
+    pub fn export_memory(&'a self, name: String, memory: IndexedRef<'a, MemType>) {
+        self.exports.borrow_mut().push(Export {
+            name,
+            description: crate::types::ExportDescription::Mem(memory),
+        });
+    }
+
+    pub fn export_global(&'a self, name: String, global: IndexedRef<'a, Global>) {
+        self.exports.borrow_mut().push(Export {
+            name,
+            description: crate::types::ExportDescription::Global(global),
+        });
     }
 }
 

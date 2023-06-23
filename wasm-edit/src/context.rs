@@ -171,7 +171,6 @@ impl Context {
 }
 
 /// A symbolic reference to a WebAssembly type `T` which can obtain the index of itself.
-#[derive(Clone)]
 pub struct IndexedRef<'a, T> {
     index: usize,
     refcell: Rc<RefCell<T>>,
@@ -215,6 +214,16 @@ impl<'a, T> Deref for IndexedRef<'a, T> {
 
     fn deref(&self) -> &Self::Target {
         &self.refcell
+    }
+}
+
+impl<'a, T> Clone for IndexedRef<'a, T> {
+    fn clone(&self) -> Self {
+        Self {
+            index: self.index.clone(),
+            refcell: self.refcell.clone(),
+            _phantom: self._phantom.clone(),
+        }
     }
 }
 
